@@ -1,0 +1,14 @@
+{
+  "name": "gitflow-es",
+  "version": "0.5.0",
+  "description": "Skills de Git Flow en espanol (`git` + `commit`) con rules empotradas, hooks de seguridad (PreToolUse bloquea force-push, commits a main, reset --hard, clean -f, commits con .env, y ediciones de archivos en main/master; SessionStart informa estado git) y el subagente `feature-doc-writer` que genera el doc de la rama al cerrarla.",
+  "author": {
+    "name": "Mi Equipo",
+    "email": "equipo@ejemplo.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "git", "gitflow", "commit", "conventional-commits",
+    "espanol", "workflow", "branches"
+  ]
+}

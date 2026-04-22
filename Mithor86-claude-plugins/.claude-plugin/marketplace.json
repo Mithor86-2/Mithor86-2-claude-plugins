@@ -1,0 +1,17 @@
+{
+  "name": "Mithor86",
+  "owner": {
+    "name": "Mithor86",
+    "email": "ing.migueltorrescubillos@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "gitflow-es",
+      "source": "./plugins/gitflow-es",
+      "description": "Skills de Git Flow en espanol (`git` + `commit`) con rules empotradas, hooks de seguridad (bloquea force-push, commits a main, reset --hard, y ediciones de archivos en main/master) y el subagente `feature-doc-writer`.",
+      "version": "0.5.0",
+      "category": "git",
+      "keywords": ["git", "gitflow", "commit", "conventional-commits", "espanol", "workflow"]
+    }
+  ]
+}
