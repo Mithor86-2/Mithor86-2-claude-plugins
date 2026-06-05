@@ -21,7 +21,8 @@ Plugin de **Git Flow para Claude Code** con idioma configurable (Español / Engl
 ## Requisitos previos
 
 - **Claude Code** con soporte de plugins/marketplace.
-- **Python 3** en el `PATH` — necesario para los hooks. Ya viene por defecto en macOS y en distros Linux modernas. Los hooks usan solo la stdlib (sin dependencias).
+- **Python 3** en el `PATH` — necesario para los hooks. Viene por defecto en macOS y en distros Linux modernas. Los hooks usan solo la stdlib (sin dependencias).
+  - En **Windows** instálalo desde [python.org](https://www.python.org/downloads/) o `winget install Python.Python.3`. Importante: los hooks invocan `python3`; instalar Python desde **Microsoft Store** crea ese alias. Si solo tienes `python`/`py`, revisa la sección [Solución de problemas](#solución-de-problemas).
 - **`git flow` (git-flow-avh)** — **solo si vas a usar el ciclo nativo de GitFlow**: `start`/`finish` de feature/hotfix/release y `git flow init`. El resto del plugin funciona con `git` estándar.
 
   ```bash
@@ -32,6 +33,15 @@ Plugin de **Git Flow para Claude Code** con idioma configurable (Español / Engl
   sudo apt install git-flow
   ```
 
+  ```powershell
+  # Windows (Chocolatey)
+  choco install gitflow-avh
+
+  # Windows (Scoop)
+  scoop install gitflow
+  ```
+
+  En Windows usa **Git Bash** (incluido en [Git para Windows](https://git-scm.com/download/win)) como shell. Guía oficial de instalación de git-flow-avh: <https://github.com/petervanderdoes/gitflow-avh/wiki/Installation>.
 - **Node.js**: no se requiere.
 - **Credenciales / connectors**: ninguno.
 
@@ -178,6 +188,7 @@ Subagentes (se invocan automáticamente desde los skills, no por el usuario): **
 ## Solución de problemas
 
 - **Tras instalar veo `0 hooks` (o los hooks no corren).** Verifica que `python3` está en el `PATH` y corre `/doctor` para ver el error. Luego `/reload-plugins`.
+- **Windows: los hooks no corren / `python3` no se reconoce.** Los hooks invocan `python3`, pero el instalador de python.org crea `python` y `py`, no `python3`. Instala Python desde **Microsoft Store** (crea el alias `python3`) o añade un alias `python3` en el `PATH`. Usa **Git Bash** como shell para que los comandos `git`/`python3` se resuelvan igual que en macOS/Linux.
 - **`git flow: command not found`.** No tienes git-flow-avh instalado. Instálalo (ver Requisitos) o usa ramas `fix/`, `refactor/` o `chore/`, que funcionan con `git` estándar.
 - **Los textos no salen en inglés.** Configura `GITFLOW_LANG=en` o `git config gitflow-es.language en`. Cualquier valor distinto de `es`/`en` cae a español.
 - **El hook bloquea mi commit en `main`.** Es intencional: el flujo exige trabajar en ramas. Crea una rama con `/git start`. (Excepción: el primer commit de un repo vacío sí se permite.)

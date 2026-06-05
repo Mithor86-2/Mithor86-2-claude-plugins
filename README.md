@@ -17,7 +17,17 @@ Marketplace personal de plugins de Claude Code. Por ahora contiene un plugin:
   # Ubuntu / Debian
   sudo apt install git-flow
   ```
-- Python 3 (viene por defecto en macOS y todas las distros Linux modernas — el hook de seguridad está escrito en Python puro sin dependencias externas).
+
+  ```powershell
+  # Windows (Chocolatey)
+  choco install gitflow-avh
+
+  # Windows (Scoop)
+  scoop install gitflow
+  ```
+
+  En Windows usa **Git Bash** ([Git para Windows](https://git-scm.com/download/win)) como shell.
+- Python 3 (viene por defecto en macOS y distros Linux modernas; el hook está en Python puro sin dependencias). En **Windows** instálalo desde [python.org](https://www.python.org/downloads/) o `winget install Python.Python.3`; como los hooks invocan `python3`, conviene instalarlo desde **Microsoft Store** (crea ese alias).
 
 ### 2. Agregar el marketplace
 
