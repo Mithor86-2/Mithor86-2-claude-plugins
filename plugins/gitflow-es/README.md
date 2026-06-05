@@ -113,9 +113,11 @@ El usuario siempre puede correr el comando o hacer la edición directamente en s
 
 ## Dependencias externas
 
-- `git flow` instalado en el sistema:
+- **`git flow`** (git-flow-avh) — **necesario solo para el ciclo nativo de GitFlow**: los subcomandos `start`/`finish` de **feature**, **hotfix** y **release**, además de `git flow init`.
   - macOS: `brew install git-flow-avh`
   - Ubuntu / Debian: `sudo apt install git-flow`
+
+  El **resto del plugin funciona con `git` estándar**, sin el binario `git flow`: los hooks (solo leen `git config`), los skills `commit` y `branch-name-suggester`, los subagentes, y las ramas `fix/`, `refactor/` y `chore/` (que usan `git checkout -b` + `git merge --no-ff`).
 
 ## Seguridad
 
