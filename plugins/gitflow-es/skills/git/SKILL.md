@@ -159,7 +159,10 @@ Inicia el proceso formal de release siguiendo GitFlow.
 3. Mostrar los commits incluidos desde el último tag (`git log <ultimo-tag>..develop --oneline`)
 4. Recordar las tareas de release:
    - Actualizar versión en `app.json`
-   - Actualizar `CHANGELOG` si existe
+   - **Actualizar el `CHANGELOG`** delegando al subagente `release-notes-writer`: lee
+     el rango de commits desde el último tag y genera el bloque del release agrupado
+     por tipo Conventional (Keep a Changelog), escribiéndolo al inicio del
+     `CHANGELOG.md`. Revisar su salida con el usuario antes de continuar.
    - Hacer commit de los cambios de versión: `chore(release): bump version to <version>`
 5. Al terminar, usar `/git finish` para fusionar en `main` y `develop`
 

@@ -21,10 +21,11 @@ Y dos **hooks** que refuerzan el flujo a nivel mecánico (no dependen de que Cla
 - **`PostToolUse` post-init hook** — tras un `git flow init` exitoso, si el idioma de gitflow-es no está configurado, le pide a Claude que pregunte el idioma en el acto (sin esperar al próximo arranque de sesión).
 - **`SessionStart` context hook** — al abrir Claude Code en un repo git, imprime un resumen del estado: rama actual, tipo GitFlow, cambios pendientes, ahead/behind respecto a origin. Si detecta que el repo no tiene `git flow init`, sugiere correrlo antes de arrancar; si ya está inicializado pero falta configurar el idioma, lo solicita.
 
-Y dos **subagentes** que delegan tareas específicas a un contexto aislado:
+Y tres **subagentes** que delegan tareas específicas a un contexto aislado:
 
 - **`feature-doc-writer`** — invocado automáticamente en el paso 3 de `/git finish`, genera el archivo `docs/<feature>/<YYYY-MM-DD>-<feature>.md` leyendo `git log` y `git diff` contra la rama base, en lugar de depender de la memoria conversacional. Solo tiene acceso a `Bash` (lectura) y `Write` (sobre `docs/`).
 - **`commit-message-writer`** — invocado por el skill `commit` para redactar el mensaje: lee únicamente `git diff --staged` en contexto aislado y devuelve la propuesta. Solo tiene acceso a `Bash` (lectura) — no commitea ni stagea.
+- **`release-notes-writer`** — invocado en el paso "actualizar CHANGELOG" de `/git release`: lee los commits desde el último tag, los agrupa por tipo Conventional (Keep a Changelog) y escribe el bloque del release en `CHANGELOG.md`. Acceso a `Bash` (lectura) y `Write` (sobre `CHANGELOG.md`).
 
 ## Idioma (ES / EN)
 
@@ -130,7 +131,8 @@ gitflow-es/
 │       └── SKILL.md                ← propone nombres de rama
 ├── agents/
 │   ├── feature-doc-writer.md       ← subagente invocado en /git finish
-│   └── commit-message-writer.md    ← subagente invocado por /commit
+│   ├── commit-message-writer.md    ← subagente invocado por /commit
+│   └── release-notes-writer.md     ← subagente invocado en /git release
 ├── hooks/
 │   ├── hooks.json                  ← registra los hooks en Claude Code
 │   ├── i18n.py                     ← mensajes ES/EN + detect_lang()

@@ -2,6 +2,20 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado con [SemVer](https://semver.org/).
 
+## [0.7.0] — 2026-06-05
+
+### Added
+- **Subagente `release-notes-writer`** (tools `Bash`, `Write`): al preparar un
+  release, lee el rango de commits desde el último tag, los agrupa por tipo
+  Conventional Commit (Added/Fixed/Changed/Maintenance/Docs, más Breaking changes,
+  Reverted y Other) y escribe el bloque del release en formato Keep a Changelog al
+  inicio del `CHANGELOG.md`. Respeta el idioma configurado en la prosa; los
+  encabezados de sección y los tipos de commit quedan fijos.
+
+### Changed
+- `skills/git/SKILL.md` delega la actualización del CHANGELOG a `release-notes-writer`
+  en el paso 4 del subcomando `release`.
+
 ## [0.6.0] — 2026-06-04
 
 ### Added
