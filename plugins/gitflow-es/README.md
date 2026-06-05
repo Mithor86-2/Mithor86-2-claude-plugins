@@ -1,66 +1,77 @@
 # gitflow-es
 
-Plugin de Git Flow para Claude Code con **idioma configurable (Español / English)**. Gestiona ramas, commits, releases y hotfixes siguiendo el modelo GitFlow, con validaciones y confirmaciones en cada paso. Por defecto responde en español; ver la sección "Idioma (ES / EN)".
+![versión](https://img.shields.io/badge/versi%C3%B3n-0.7.1-blue)
+![licencia](https://img.shields.io/badge/licencia-MIT-green)
+![idioma](https://img.shields.io/badge/idioma-ES%20%2F%20EN-orange)
+
+Plugin de **Git Flow para Claude Code** con idioma configurable (Español / English). Gestiona ramas, commits, releases y hotfixes siguiendo el modelo GitFlow, reforzado con hooks de seguridad y subagentes que generan documentación, mensajes de commit y changelogs a partir del histórico git real.
+
+## Características
+
+- **Skill `git`** — ciclo de vida completo de ramas: `start`, `finish`, `release`, `hotfix`, `status` y operaciones básicas (add, push, pull, log, diff, stash, branch, checkout, merge, tag, undo, sync).
+- **Skill `commit`** — genera y aplica commits siguiendo Conventional Commits, analizando el diff staged real.
+- **Skill `branch-name-suggester`** — propone 2-3 nombres de rama en kebab-case con el prefijo GitFlow correcto.
+- **3 subagentes** (contexto aislado): `feature-doc-writer` (doc de la rama al cerrarla), `commit-message-writer` (mensaje de commit desde el diff) y `release-notes-writer` (CHANGELOG agrupado por tipo Conventional).
+- **3 hooks mecánicos**: `PreToolUse` (bloquea operaciones git peligrosas), `PostToolUse` (pide el idioma tras `git flow init`) y `SessionStart` (imprime el estado GitFlow al abrir el repo).
+- **Idioma ES/EN configurable** — todo el texto generado (prosa, mensajes de commit, nombres de rama) sale en el idioma elegido.
+- **Rules empotradas** — política de ramas y formato de docs como fuente única de verdad.
+
+> Este plugin **no aporta ni requiere connectors MCP**: opera solo con `git` y, opcionalmente, el binario `git flow`.
+
+## Requisitos previos
+
+- **Claude Code** con soporte de plugins/marketplace.
+- **Python 3** en el `PATH` — necesario para los hooks. Ya viene por defecto en macOS y en distros Linux modernas. Los hooks usan solo la stdlib (sin dependencias).
+- **`git flow` (git-flow-avh)** — **solo si vas a usar el ciclo nativo de GitFlow**: `start`/`finish` de feature/hotfix/release y `git flow init`. El resto del plugin funciona con `git` estándar.
+
+  ```bash
+  # macOS
+  brew install git-flow-avh
+
+  # Ubuntu / Debian
+  sudo apt install git-flow
+  ```
+
+- **Node.js**: no se requiere.
+- **Credenciales / connectors**: ninguno.
 
 ## Instalación
 
-Este plugin se distribuye en el marketplace **Mithor86-2**. Una vez añadido el marketplace, instálalo y recárgalo:
+El plugin se distribuye en el marketplace **Mithor86-2**. Desde Claude Code:
 
-```
+```text
 /plugin marketplace add Mithor86-2/Mithor86-2-claude-plugins
 /plugin install gitflow-es@Mithor86-2
 /reload-plugins
 ```
 
-Para actualizar a una versión nueva: `/plugin marketplace update Mithor86-2` + `/reload-plugins`. Los pasos detallados (alta del marketplace, verificación, desinstalación) están en el [README del repositorio](../../README.md).
+Verifica que quedó activo:
 
-## Qué incluye
+```text
+/plugin
+```
 
-Tres skills que Claude activa automáticamente según el contexto:
+Deberías ver `gitflow-es` habilitado y un resumen tipo `3 skills · 3 agents · 3 hooks`. Si los hooks aparecen en `0`, corre `/doctor`.
 
-- **`git`** — gestiona el ciclo de vida de ramas (start / finish / release / hotfix / status) y operaciones cotidianas (add, push, pull, log, diff, stash, branch, checkout, merge, tag, undo, sync). Se activa cuando el usuario menciona ramas, PRs, merges o cualquier operación de git.
-- **`commit`** — genera mensajes siguiendo Conventional Commits, analizando el diff real de los cambios staged. Se activa cuando el usuario quiere hacer commit o guardar cambios.
-- **`branch-name-suggester`** — propone 2-3 nombres de rama en kebab-case con el prefijo GitFlow correcto a partir de una descripción libre. El skill `git` lo usa en su subcomando `start`.
+Para actualizar a una versión nueva:
 
-Y las **rules** que ambos skills comparten (fuente única de verdad del flujo):
+```text
+/plugin marketplace update Mithor86-2
+/reload-plugins
+```
 
-- `rules/git-flow.md` — ramas, nomenclatura, Conventional Commits, scopes del proyecto, flujo obligatorio.
-- `rules/feature-docs.md` — formato del doc que se genera al cerrar una rama.
+## Configuración
 
-Y tres **hooks** que refuerzan el flujo a nivel mecánico (no dependen de que Claude recuerde las reglas):
+La única configuración del plugin es el **idioma de salida** (ES/EN). Se resuelve con esta prioridad:
 
-- **`PreToolUse` safety hook** — intercepta comandos Bash antes de ejecutarse y bloquea operaciones git peligrosas (ver sección "Safety hook" abajo).
-- **`PostToolUse` post-init hook** — tras un `git flow init` exitoso, si el idioma de gitflow-es no está configurado, le pide a Claude que pregunte el idioma en el acto (sin esperar al próximo arranque de sesión).
-- **`SessionStart` context hook** — al abrir Claude Code en un repo git, imprime un resumen del estado: rama actual, tipo GitFlow, cambios pendientes, ahead/behind respecto a origin. Si detecta que el repo no tiene `git flow init`, sugiere correrlo antes de arrancar; si ya está inicializado pero falta configurar el idioma, lo solicita.
-
-Y tres **subagentes** que delegan tareas específicas a un contexto aislado:
-
-- **`feature-doc-writer`** — invocado automáticamente en el paso 3 de `/git finish`, genera el archivo `docs/<feature>/<YYYY-MM-DD>-<feature>.md` leyendo `git log` y `git diff` contra la rama base, en lugar de depender de la memoria conversacional. Solo tiene acceso a `Bash` (lectura) y `Write` (sobre `docs/`).
-- **`commit-message-writer`** — invocado por el skill `commit` para redactar el mensaje: lee únicamente `git diff --staged` en contexto aislado y devuelve la propuesta. Solo tiene acceso a `Bash` (lectura) — no commitea ni stagea.
-- **`release-notes-writer`** — invocado en el paso "actualizar CHANGELOG" de `/git release`: lee los commits desde el último tag, los agrupa por tipo Conventional (Keep a Changelog) y escribe el bloque del release en `CHANGELOG.md`. Acceso a `Bash` (lectura) y `Write` (sobre `CHANGELOG.md`).
-
-## Idioma (ES / EN)
-
-El plugin responde en español por defecto, pero puede configurarse en inglés. El idioma activo se resuelve con esta prioridad:
-
-1. Variable de entorno `GITFLOW_LANG` (`es` o `en`).
-2. `git config gitflow-es.language` (ej. `git config gitflow-es.language en` para el repo actual, o `--global` para todos).
-3. Default: `es`.
-
-Cualquier valor fuera de `es`/`en` cae a español. El idioma afecta **todo el texto generado**: la prosa, los **mensajes de commit** y los **nombres de rama** (que usan palabras del idioma configurado, siempre en kebab-case ASCII transliterando tildes/ñ). Los mensajes de los hooks (`safety-check`, `session-context`) se traducen en runtime vía `hooks/i18n.py`, y los skills/subagentes detectan el idioma y responden en él. **Quedan fijos y nunca se traducen**: los comandos git, los prefijos GitFlow (`feature/`, `fix/`…), los tipos de Conventional Commits (`feat`, `fix`…) y los encabezados de formato fijo de los docs de feature.
-
-### Cuándo se solicita el idioma
-
-El plugin pide configurar el idioma en el momento adecuado (lo recuerda el `session-context` al iniciar sesión y lo aplica el skill `git`):
-
-- **Si git-flow no está inicializado:** primero se inicializa (`git flow init -d`) y, **después**, se pregunta el idioma y se guarda con `git config gitflow-es.language <es|en>`.
-- **Si git-flow ya está inicializado pero el idioma no está configurado:** se pregunta **antes** de realizar cualquier acción de git.
-- **Si ya está configurado:** se procede directamente.
-
-Ejemplos:
+| Orden | Fuente | Ejemplo |
+| --- | --- | --- |
+| 1 | Variable de entorno `GITFLOW_LANG` | `export GITFLOW_LANG=en` |
+| 2 | `git config gitflow-es.language` | `git config gitflow-es.language en` |
+| 3 | Default | `es` |
 
 ```bash
-# Solo esta sesión
+# Solo la sesión actual
 export GITFLOW_LANG=en
 
 # Persistente para este repo
@@ -70,90 +81,110 @@ git config gitflow-es.language en
 git config --global gitflow-es.language en
 ```
 
+Valores válidos: `es` y `en`; cualquier otro cae a español. Si abres un repo con git-flow ya inicializado y el idioma sin configurar, el plugin te lo pedirá antes de la primera acción de git. No requiere archivos de config adicionales ni permisos especiales más allá de los que Claude Code pide para ejecutar `git`.
+
 ## Uso
 
-Una vez instalado, Claude detecta el contexto automáticamente. Ejemplos:
+Claude detecta el contexto automáticamente: puedes usar los subcomandos literalmente o solo describir lo que quieres.
 
-- _"quiero arrancar una feature para el login con google"_ → activa `git`, hace `git flow feature start login-con-google`.
-- _"cierra la rama actual"_ → activa `git`, genera el doc de la feature, pide confirmación y hace el finish.
-- _"necesito un hotfix urgente para el crash al pagar"_ → activa `git`, parte desde `main` y crea `hotfix/*`.
-- _"haz commit de los cambios"_ → activa `commit`, analiza el diff, propone mensaje y pide confirmación.
+### Crear una rama (`git` + `branch-name-suggester`)
 
-Los subcomandos `/git start`, `/git finish`, `/commit`, etc. descritos en los SKILL.md son referencias del flujo — el usuario puede usarlos literalmente o simplemente describir lo que quiere.
-
-## Pruebas antes del finish (opcional)
-
-El flujo de `/git finish` incluye un paso _opcional_ en el que Claude puede sugerir ejecutar las pruebas del proyecto antes de cerrar la rama. Si tu proyecto tiene un comando/script de pruebas (ej. `/run-tests`, `npm test`, `pytest`), Claude puede proponérselo al usuario. Si no lo tiene, el finish procede sin fricción.
-
-## Safety hook — qué bloquea
-
-El hook `PreToolUse` corre antes de cada comando Bash y antes de cada edición de archivo (Write / Edit / MultiEdit / NotebookEdit) y bloquea estos patrones mecánicamente (aunque Claude intente ejecutarlos):
-
-| Patrón detectado | Motivo |
-| ---------------- | ------ |
-| Editar cualquier archivo estando parado en `main` o `master` | Regla del flujo: nunca se modifica la rama de producción directamente — se exige crear una rama de trabajo primero |
-| `git push --force` / `-f` / `--force-with-lease` sobre `main`, `master` o `develop` | Reescribir historial compartido rompe el trabajo del equipo |
-| `git commit` estando parado en `main` o `master` | Regla del flujo: se trabaja siempre en ramas |
-| `git commit --no-verify` | Saltarse los pre-commit hooks oculta problemas |
-| `git commit --author=...` | El autor siempre debe ser el usuario configurado en git |
-| `git reset --hard` | Destruye cambios sin aviso |
-| `git clean -f` / `-fd` / `-xf` | Elimina archivos sin confirmación (usar `-n` para previsualizar) |
-| `git add` / `git commit` con `.env`, `id_rsa`, `credentials.json`, `.pem`, etc. | Previene leaks de credenciales |
-| `git flow feature/hotfix/release/support start/finish` en un repo que no tiene `git flow init` | Evita errores confusos de git-flow; el hook sugiere correr `git flow init -d` primero |
-
-Cuando bloquea, el hook devuelve un mensaje claro (en el idioma configurado, ver "Idioma (ES / EN)") indicando qué violó y sugiriendo la alternativa correcta. **`develop` no está en la lista de ramas protegidas para edición** — las ediciones en `develop` se permiten para respetar la excepción documentada "Commit directo en develop" que el skill `git` maneja cuando el usuario lo solicita explícitamente.
-
-**Excepción para repos recién inicializados:** si el repo todavía no tiene commits, el hook permite editar archivos y hacer el primer `git commit` en `main`/`master` — es la única forma de crear el commit inicial antes de poder ramificar. A partir del segundo commit vuelve a aplicar la regla normal.
-
-El usuario siempre puede correr el comando o hacer la edición directamente en su terminal / editor si realmente lo necesita — el hook solo aplica a las acciones de Claude.
-
-## Requisitos para los hooks
-
-- **Python 3** en el `PATH`. Ya viene instalado por defecto en macOS y en todas las distros Linux modernas. Los hooks no tienen dependencias fuera de la stdlib.
-
-## Dependencias externas
-
-- `git flow` instalado en el sistema:
-  - macOS: `brew install git-flow-avh`
-  - Ubuntu / Debian: `sudo apt install git-flow`
-
-## Seguridad
-
-Todas las acciones destructivas o con efecto remoto requieren confirmación explícita:
-
-- Nunca hace `git push` sin autorización.
-- Nunca opera directo sobre `main` o `develop` — siempre a través de una rama de trabajo.
-- Nunca usa `--force`, `reset --hard` ni `clean -f` sin confirmación.
-
-## Estructura
-
+```text
+quiero arrancar una feature para el login con Google
 ```
+
+Propone 2-3 nombres (`feature/login-con-google`, …), confirma contigo y ejecuta `git flow feature start <nombre>`.
+
+### Hacer un commit (`commit` + `commit-message-writer`)
+
+```text
+haz commit de los cambios
+```
+
+Stagea (si hace falta), el subagente lee `git diff --staged`, propone un mensaje Conventional y pide confirmación antes de `git commit`. Salida esperada:
+
+```text
+feat(auth): agregar validación de email en login
+```
+
+### Cerrar una rama (`git` + `feature-doc-writer`)
+
+```text
+cierra la rama actual
+```
+
+Genera `docs/<feature>/<YYYY-MM-DD>-<feature>.md` desde el `git log`/`git diff`, lo revisa contigo y ejecuta `git flow feature finish`.
+
+### Preparar un release (`git` + `release-notes-writer`)
+
+```text
+/git release 0.8.0
+```
+
+Crea `release/0.8.0` y el subagente escribe el bloque del CHANGELOG agrupado por tipo Conventional (Added/Fixed/Changed/…) leyendo los commits desde el último tag.
+
+### Ver el estado GitFlow
+
+```text
+/git status
+```
+
+Muestra rama actual, tipo GitFlow, base, destino del PR y archivos pendientes.
+
+### Hotfix urgente
+
+```text
+necesito un hotfix para el crash al pagar
+```
+
+Parte desde `main`, crea `hotfix/<descripcion>` y avisa que el cierre va a `main` **y** a `develop`.
+
+## Estructura del proyecto
+
+```text
 gitflow-es/
 ├── .claude-plugin/
-│   └── plugin.json
-├── rules/                          ← compartidas por skills y subagentes
-│   ├── git-flow.md
-│   └── feature-docs.md
+│   └── plugin.json                 ← manifiesto del plugin (nombre, versión, metadata)
+├── rules/                          ← fuente única de verdad, compartida por skills y subagentes
+│   ├── git-flow.md                 ← política de ramas, nomenclatura, Conventional Commits
+│   └── feature-docs.md             ← formato del doc que se genera al cerrar una rama
 ├── skills/
-│   ├── git/
-│   │   └── SKILL.md                ← referencia ../../rules/
-│   ├── commit/
-│   │   └── SKILL.md                ← referencia ../../rules/
-│   └── branch-name-suggester/
-│       └── SKILL.md                ← propone nombres de rama
+│   ├── git/SKILL.md                ← skill principal de operaciones git
+│   ├── commit/SKILL.md             ← skill de Conventional Commits
+│   └── branch-name-suggester/SKILL.md  ← propone nombres de rama
 ├── agents/
-│   ├── feature-doc-writer.md       ← subagente invocado en /git finish
-│   ├── commit-message-writer.md    ← subagente invocado por /commit
-│   └── release-notes-writer.md     ← subagente invocado en /git release
+│   ├── feature-doc-writer.md       ← subagente: doc de la rama (en /git finish)
+│   ├── commit-message-writer.md    ← subagente: mensaje de commit (por /commit)
+│   └── release-notes-writer.md     ← subagente: CHANGELOG (en /git release)
 ├── hooks/
 │   ├── hooks.json                  ← registra los hooks en Claude Code
-│   ├── i18n.py                     ← mensajes ES/EN + detect_lang()
-│   ├── safety-check.py             ← PreToolUse (bloquea comandos peligrosos)
-│   ├── post-gitflow-init.py        ← PostToolUse (pide idioma tras git flow init)
-│   └── session-context.py          ← SessionStart (imprime estado git)
+│   ├── i18n.py                     ← mensajes ES/EN + detección de idioma (módulo compartido)
+│   ├── safety-check.py             ← PreToolUse: bloquea comandos git peligrosos
+│   ├── post-gitflow-init.py        ← PostToolUse: pide el idioma tras git flow init
+│   └── session-context.py          ← SessionStart: imprime el estado git
 └── README.md
 ```
 
-## Licencia
+## Skills incluidos
 
-MIT — ver [LICENSE](../../LICENSE).
+| Skill | Qué hace | Cuándo se activa (triggers) |
+| --- | --- | --- |
+| `git` | Ciclo de vida de ramas y commits GitFlow (start/finish/release/hotfix/status) + operaciones básicas. | Menciones de ramas, PRs, merges, releases, hotfixes, push, pull, stash, tags… aunque no se diga "gitflow". |
+| `commit` | Genera y aplica un commit Conventional analizando el diff staged. | "haz commit", "guarda los cambios", "registra esto", o cuando `git` delega el mensaje. |
+| `branch-name-suggester` | Propone 2-3 nombres de rama en kebab-case con prefijo GitFlow. | Al ir a crear una rama cuando el nombre no está definido, o desde `/git start`. |
+
+Subagentes (se invocan automáticamente desde los skills, no por el usuario): **`feature-doc-writer`** (en `/git finish`), **`commit-message-writer`** (por `/commit`), **`release-notes-writer`** (en `/git release`).
+
+## Solución de problemas
+
+- **Tras instalar veo `0 hooks` (o los hooks no corren).** Verifica que `python3` está en el `PATH` y corre `/doctor` para ver el error. Luego `/reload-plugins`.
+- **`git flow: command not found`.** No tienes git-flow-avh instalado. Instálalo (ver Requisitos) o usa ramas `fix/`, `refactor/` o `chore/`, que funcionan con `git` estándar.
+- **Los textos no salen en inglés.** Configura `GITFLOW_LANG=en` o `git config gitflow-es.language en`. Cualquier valor distinto de `es`/`en` cae a español.
+- **El hook bloquea mi commit en `main`.** Es intencional: el flujo exige trabajar en ramas. Crea una rama con `/git start`. (Excepción: el primer commit de un repo vacío sí se permite.)
+- **Un subagente avisa que no hay nada que generar.** Asegúrate de estar en la rama correcta y de que hay commits en el rango (p. ej. `release-notes-writer` necesita commits desde el último tag).
+- **No quiero que me pida el idioma cada vez.** Configúralo una vez con `git config gitflow-es.language <es|en>` (o `--global`).
+
+## Contribución y licencia
+
+- **Reportar bugs / proponer cambios:** abre un issue o un Pull Request en el repositorio: <https://github.com/Mithor86-2/Mithor86-2-claude-plugins>. Sigue Conventional Commits (el propio plugin te ayuda a redactarlos).
+- **Licencia:** MIT — ver [LICENSE](../../LICENSE).

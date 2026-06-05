@@ -9,7 +9,7 @@ Marketplace personal de plugins de Claude Code. Por ahora contiene un plugin:
 ### 1. Requisitos previos
 
 - [Claude Code](https://claude.com/claude-code) instalado.
-- `git flow` instalado localmente:
+- `git flow` (git-flow-avh) **solo si vas a usar el ciclo nativo de GitFlow** (`start`/`finish` de feature/hotfix/release y `git flow init`). El resto del plugin funciona con `git` estándar.
   ```bash
   # macOS
   brew install git-flow-avh
