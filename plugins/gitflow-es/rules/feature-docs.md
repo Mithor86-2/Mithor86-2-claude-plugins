@@ -1,5 +1,11 @@
 # Documentación por Feature
 
+> **EN:** Assistant prose in the generated doc follows the configured language
+> (`GITFLOW_LANG` or `git config gitflow-es.language`, default `es`). The template
+> headers below (`## Descripción`, etc.) are **fixed-format and must NOT be
+> translated** even when the language is `en` — downstream team tooling depends on
+> them.
+
 Al hacer el **finish de una rama**, Claude debe crear este archivo **automáticamente** como parte del flujo de `/git finish`, antes de ejecutar el merge.
 
 > Si el usuario invoca `/git finish` sin que exista el doc, Claude debe generarlo primero y pedir confirmación antes de continuar con el merge.

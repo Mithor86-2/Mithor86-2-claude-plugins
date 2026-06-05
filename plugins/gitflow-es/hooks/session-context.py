@@ -15,6 +15,22 @@ import subprocess
 import sys
 from typing import List, Optional
 
+# Módulo i18n compartido (mismo directorio → resuelto vía sys.path[0]). Import
+# defensivo: si fallara, _t cae a español embebido y el hook sigue funcionando.
+try:
+    import i18n as _i18n
+except Exception:  # pragma: no cover - ruta de degradación
+    _i18n = None
+
+_LANG = "es"
+
+
+def _t(key: str, **kwargs) -> str:
+    """Traduce `key` al idioma activo, con fallback a la clave cruda si falla."""
+    if _i18n is not None:
+        return _i18n.t(key, _LANG, **kwargs)
+    return ""
+
 
 def run(cmd: List[str]) -> Optional[str]:
     """Ejecuta un comando y devuelve stdout, o None si falla."""
@@ -40,6 +56,19 @@ def in_git_repo() -> bool:
 def gitflow_initialized() -> bool:
     """True si el repo tiene git-flow inicializado (config gitflow.branch.develop)."""
     return bool(run(["git", "config", "--get", "gitflow.branch.develop"]))
+
+
+def lang_set() -> bool:
+    """
+    True si el idioma de gitflow-es ya está configurado explícitamente. Si el
+    módulo i18n no está disponible, devolvemos True para no nag-ear sin razón.
+    """
+    if _i18n is None:
+        return True
+    try:
+        return _i18n.lang_explicitly_set()
+    except Exception:
+        return True
 
 
 def repo_has_commits() -> bool:
@@ -93,6 +122,13 @@ def ahead_behind(branch: str) -> Optional[tuple]:
 
 
 def main() -> None:
+    global _LANG
+    if _i18n is not None:
+        try:
+            _LANG = _i18n.detect_lang()
+        except Exception:
+            _LANG = "es"
+
     if not in_git_repo():
         return  # Sin salida = no se inyecta nada
 
@@ -101,15 +137,13 @@ def main() -> None:
     # usuario hacia el primer commit y luego hacia `git flow init -d`.
     if not repo_has_commits():
         out = [
-            "## Estado GitFlow del repo",
+            _t("sc_header"),
             "",
-            "### ⚠️ Repo recién inicializado (sin commits)",
+            _t("sc_no_commits_title"),
             "",
-            "Este repo todavía no tiene ningún commit. Git necesita al menos "
-            "un commit inicial antes de poder crear ramas o inicializar "
-            "git-flow.",
+            _t("sc_no_commits_body"),
             "",
-            "**Flujo sugerido** (proponérselo al usuario, pedir OK y ejecutar):",
+            _t("sc_no_commits_flow_label"),
             "",
             "```bash",
             "git add .",
@@ -117,9 +151,9 @@ def main() -> None:
             "git flow init -d",
             "```",
             "",
-            "El hook de safety permite este primer commit en `main`/`master` "
-            "como excepción explícita. A partir del segundo commit vuelve a "
-            "aplicar la regla normal (solo commits desde ramas de trabajo).",
+            _t("sc_no_commits_note"),
+            "",
+            _t("sc_lang_after_init"),
         ]
         print("\n".join(out))
         return
@@ -130,63 +164,62 @@ def main() -> None:
     num_changes = len([l for l in status_lines.splitlines() if l.strip()])
 
     out = []
-    out.append("## Estado GitFlow del repo")
+    out.append(_t("sc_header"))
     out.append("")
-    out.append(f"- **Rama actual:** `{branch}`")
+    out.append(_t("sc_current_branch", branch=branch))
 
     if branch in {"main", "master", "develop"}:
-        out.append(
-            f"- ⚠️ Estás parado en `{branch}`. No modifiques archivos aquí; "
-            f"usa `/git start <tipo> <descripcion>` para crear una rama de trabajo."
-        )
+        out.append(_t("sc_on_protected", branch=branch))
     elif kind:
-        out.append(f"- **Tipo GitFlow:** `{kind}`")
+        out.append(_t("sc_branch_type", kind=kind))
     elif branch != "(detached HEAD)":
-        out.append(f"- La rama no usa un prefijo GitFlow reconocido.")
+        out.append(_t("sc_unknown_prefix"))
 
     if num_changes > 0:
-        out.append(f"- **Cambios pendientes:** {num_changes} archivo(s)")
+        out.append(_t("sc_pending_changes", count=num_changes))
     else:
-        out.append("- Working tree limpio")
+        out.append(_t("sc_clean_tree"))
 
     ab = ahead_behind(branch)
     if ab is not None:
         ahead, behind = ab
         if ahead == 0 and behind == 0:
-            out.append("- Sincronizada con `origin`")
+            out.append(_t("sc_synced"))
         elif ahead > 0 and behind == 0:
-            out.append(f"- {ahead} commit(s) por delante de `origin`")
+            out.append(_t("sc_ahead", ahead=ahead))
         elif behind > 0 and ahead == 0:
-            out.append(f"- {behind} commit(s) por detrás de `origin`")
+            out.append(_t("sc_behind", behind=behind))
         else:
-            out.append(f"- Divergida: {ahead} adelante / {behind} atrás de `origin`")
+            out.append(_t("sc_diverged", ahead=ahead, behind=behind))
 
     # Aviso si git-flow no está inicializado (tono proactivo: Claude puede
     # ofrecer correr `git flow init -d` después de pedir OK al usuario).
     if not gitflow_initialized():
         out.append("")
-        out.append("### ⚠️ git-flow no inicializado")
-        out.append(
-            "Este repo no tiene git-flow configurado todavía. Los subcomandos "
-            "`git flow feature|hotfix|release start/finish` no funcionarán "
-            "hasta que se inicialice."
-        )
+        out.append(_t("sc_no_gitflow_title"))
+        out.append(_t("sc_no_gitflow_body"))
         out.append("")
-        out.append(
-            "**Acción sugerida:** preguntarle al usuario si quiere "
-            "inicializarlo ahora con los defaults del equipo:"
-        )
+        out.append(_t("sc_no_gitflow_action"))
         out.append("")
         out.append("```bash")
         out.append("git flow init -d")
         out.append("```")
         out.append("")
-        out.append(
-            "Eso configura `main` como rama de producción, `develop` como "
-            "rama de integración, y los prefijos estándar (`feature/`, "
-            "`hotfix/`, `release/`, `support/`). Si el repo aún no tiene "
-            "rama `develop`, git-flow la creará."
-        )
+        out.append(_t("sc_no_gitflow_explain"))
+        out.append("")
+        out.append(_t("sc_lang_after_init"))
+    elif not lang_set():
+        # git-flow ya inicializado pero el idioma no está configurado: pedirlo
+        # antes de cualquier acción de git.
+        out.append("")
+        out.append(_t("sc_lang_prompt_title"))
+        out.append(_t("sc_lang_prompt_body"))
+        out.append("")
+        out.append("```bash")
+        out.append("git config gitflow-es.language es   # o: en")
+        out.append("```")
+        out.append("")
+        out.append(_t("sc_lang_prompt_note"))
 
     print("\n".join(out))
 

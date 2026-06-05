@@ -7,13 +7,26 @@ description: Genera y aplica commits siguiendo Conventional Commits del proyecto
 
 Genera y aplica un commit siguiendo Conventional Commits y las convenciones del proyecto.
 
+## Idioma de salida
+
+Antes de responder, detecta el idioma configurado para gitflow-es y produce
+**toda** tu salida al usuario en ese idioma:
+1. Si `GITFLOW_LANG` está definida, úsala.
+2. Si no, ejecuta `git config --get gitflow-es.language` y usa su valor.
+3. Si ninguna existe, usa español (`es`) por defecto.
+
+Valores válidos: `es` y `en`; cualquier otro se trata como `es`. El idioma afecta el
+**asunto/cuerpo** del commit, pero los tipos (`feat`, `fix`…) y scopes no se traducen.
+
 ## Flujo
 
 1. Ejecutar `git status` — verificar qué archivos están staged
 2. Si no hay nada staged, mostrar los archivos modificados y preguntar cuáles stagear
 3. Ejecutar `git diff --staged` — analizar el contenido real de los cambios
 4. Determinar tipo y scope según los archivos y cambios detectados
-5. Generar el mensaje siguiendo Conventional Commits
+5. **Redactar el mensaje** delegando al subagente `commit-message-writer`, que lee
+   `git diff --staged` en contexto aislado y devuelve el mensaje propuesto siguiendo
+   Conventional Commits
 6. Mostrar el mensaje propuesto y pedir confirmación antes de aplicar
 7. Ejecutar `git commit -m "<mensaje>"`
 
@@ -45,7 +58,7 @@ chore(deps): actualizar expo sdk a 54.0.27
 
 ## Reglas
 
-- Descripción en **español**, imperativo, sin mayúscula inicial, sin punto final
+- Descripción en el **idioma configurado** (ver "Idioma de salida"; default español), imperativo, sin mayúscula inicial, sin punto final
 - Máximo 72 caracteres en la primera línea
 - Si afecta múltiples scopes, usar el más representativo
 - **Nunca** commitear `.env`, credenciales ni binarios

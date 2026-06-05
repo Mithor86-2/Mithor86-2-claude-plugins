@@ -47,8 +47,19 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+# Módulo i18n compartido (mismo directorio → resuelto vía sys.path[0]). Import
+# defensivo: si fallara, _t devuelve un fallback mínimo y el hook sigue
+# bloqueando (fail-safe en seguridad, aunque pierda el texto traducido).
+try:
+    import i18n as _i18n
+except Exception:  # pragma: no cover - ruta de degradación
+    _i18n = None
+
 EDIT_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 PROTECTED_BRANCHES = {"main", "master"}
+
+# Idioma resuelto una vez por proceso en main(); block() lo lee.
+_LANG = "es"
 
 
 # --------------------------------------------------------------------------- #
@@ -56,17 +67,22 @@ PROTECTED_BRANCHES = {"main", "master"}
 # --------------------------------------------------------------------------- #
 
 
+def _t(key: str, **kwargs) -> str:
+    """Traduce `key` al idioma activo. Cadena vacía si i18n no está disponible."""
+    if _i18n is not None:
+        return _i18n.t(key, _LANG, **kwargs)
+    return ""
+
+
 def block(reason: str, hint: str = "") -> None:
     """Bloquea la acción y sale. Código 2 = deny para Claude Code."""
-    print(f"[gitflow-es safety] {reason}", file=sys.stderr)
-    if hint:
-        print(hint, file=sys.stderr)
-    else:
-        print(
-            "Si realmente necesitas ejecutar esto, pídele al usuario que "
-            "lo haga directamente en su terminal.",
-            file=sys.stderr,
-        )
+    msg = reason or "Operación bloqueada por la política del equipo."
+    print(f"[gitflow-es safety] {msg}", file=sys.stderr)
+    default_hint = _t("block_default_hint") or (
+        "Si realmente necesitas ejecutar esto, pídele al usuario que "
+        "lo haga directamente en su terminal."
+    )
+    print(hint or default_hint, file=sys.stderr)
     sys.exit(2)
 
 
@@ -179,11 +195,7 @@ def check_force_push(command: str, branch: Optional[str]) -> None:
     target = target_match.group(2) if target_match else branch
 
     if target in {"main", "master", "develop"}:
-        block(
-            f"Bloqueado: `git push --force` sobre `{target}` está prohibido por "
-            f"la política del equipo. Rehace los commits o haz revert en una "
-            f"rama de trabajo en vez de reescribir el historial compartido."
-        )
+        block(_t("force_push", target=target))
 
 
 def check_commit_on_main(command: str, branch: Optional[str]) -> None:
@@ -200,49 +212,31 @@ def check_commit_on_main(command: str, branch: Optional[str]) -> None:
     # Excepción: repo sin commits todavía — permitir el primer commit
     if not repo_has_commits():
         return
-    block(
-        f"Bloqueado: commit directo en `{branch}`. El flujo del equipo "
-        f"exige trabajar en una rama (`feature/*`, `fix/*`, `hotfix/*`, "
-        f"etc.) y cerrarla con `/git finish`."
-    )
+    block(_t("commit_on_main", branch=branch))
 
 
 def check_no_verify(command: str, _branch: Optional[str]) -> None:
     """Bloquea --no-verify en commits."""
     if re.search(r"\bgit\s+commit\b.*--no-verify\b", command):
-        block(
-            "Bloqueado: `git commit --no-verify` está prohibido. Los "
-            "pre-commit hooks existen por una razón — si uno está roto, "
-            "arréglalo en lugar de saltártelo."
-        )
+        block(_t("no_verify"))
 
 
 def check_explicit_author(command: str, _branch: Optional[str]) -> None:
     """Bloquea --author=... (el autor debe ser el usuario configurado)."""
     if re.search(r"\bgit\s+commit\b.*--author\b", command):
-        block(
-            "Bloqueado: `git commit --author=...` está prohibido. El autor "
-            "del commit siempre debe ser el usuario configurado en git."
-        )
+        block(_t("explicit_author"))
 
 
 def check_reset_hard(command: str, _branch: Optional[str]) -> None:
     """Bloquea git reset --hard."""
     if re.search(r"\bgit\s+reset\b.*--hard\b", command):
-        block(
-            "Bloqueado: `git reset --hard` destruye cambios sin aviso. Si "
-            "realmente lo necesitas, córrelo manualmente en tu terminal."
-        )
+        block(_t("reset_hard"))
 
 
 def check_clean_force(command: str, _branch: Optional[str]) -> None:
     """Bloquea git clean con -f."""
     if re.search(r"\bgit\s+clean\b(?:.*\s)?-[a-zA-Z]*f[a-zA-Z]*\b", command):
-        block(
-            "Bloqueado: `git clean -f` elimina archivos sin confirmación. "
-            "Si realmente lo necesitas, córrelo manualmente o usa `git "
-            "clean -n` primero para previsualizar."
-        )
+        block(_t("clean_force"))
 
 
 def check_sensitive_files(command: str, _branch: Optional[str]) -> None:
@@ -251,11 +245,7 @@ def check_sensitive_files(command: str, _branch: Optional[str]) -> None:
         return
 
     if re.search(r"(?<![\w.])\.env(?!\.(?:example|sample|template|dist))\b", command):
-        block(
-            "Bloqueado: parece que estás intentando añadir `.env` al commit. "
-            "Los archivos `.env` no deben versionarse — agrega el archivo a "
-            "`.gitignore`. Si es un `.env.example`, renómbralo."
-        )
+        block(_t("sensitive_env"))
 
     suspicious = [
         r"\bid_rsa\b",
@@ -268,11 +258,7 @@ def check_sensitive_files(command: str, _branch: Optional[str]) -> None:
     ]
     for pattern in suspicious:
         if re.search(pattern, command, re.IGNORECASE):
-            block(
-                f"Bloqueado: el comando parece añadir un archivo sensible "
-                f"(patrón `{pattern}`). Si es un falso positivo, renombra el "
-                f"archivo o córrelo manualmente."
-            )
+            block(_t("sensitive_file", pattern=pattern))
 
 
 def check_gitflow_not_initialized(command: str, _branch: Optional[str]) -> None:
@@ -298,19 +284,8 @@ def check_gitflow_not_initialized(command: str, _branch: Optional[str]) -> None:
         return
 
     block(
-        "Bloqueado: este repo no tiene git-flow inicializado todavía, y el "
-        "subcomando `git flow " + subcommand + "` lo requiere.",
-        hint=(
-            "Para arreglarlo, propónle al usuario inicializar git-flow con "
-            "los defaults del equipo:\n\n"
-            "  git flow init -d\n\n"
-            "Eso configura `main` como rama de producción, `develop` como "
-            "rama de integración, y los prefijos estándar (feature/, "
-            "hotfix/, release/, support/).\n\n"
-            "Si el repo aún no tiene rama `develop`, git-flow la creará "
-            "automáticamente. Una vez inicializado, reintenta el comando "
-            "original."
-        ),
+        _t("gitflow_not_init_reason", subcommand=subcommand),
+        hint=_t("gitflow_not_init_hint"),
     )
 
 
@@ -367,19 +342,8 @@ def check_edit_on_main(file_path: str) -> None:
         return
 
     block(
-        f"Bloqueado: estás parado en `{branch}` y no se permite modificar "
-        f"archivos directamente sobre la rama de producción. Antes de "
-        f"editar `{file_path}`, crea una rama de trabajo.",
-        hint=(
-            "Flujo sugerido:\n"
-            "  1. Preguntarle al usuario qué tipo de cambio es "
-            "(feature, fix, hotfix, chore, refactor).\n"
-            "  2. Proponer un nombre de rama en kebab-case y confirmarlo.\n"
-            "  3. Crear la rama con `git flow <tipo> start <nombre>` "
-            "(para feature/hotfix/release) o `git checkout -b "
-            "<tipo>/<nombre>` desde develop (para fix/refactor/chore).\n"
-            "  4. Una vez en la rama, reintentar la edición."
-        ),
+        _t("edit_on_main_reason", branch=branch, file_path=file_path),
+        hint=_t("edit_on_main_hint"),
     )
 
 
@@ -389,6 +353,13 @@ def check_edit_on_main(file_path: str) -> None:
 
 
 def main() -> None:
+    global _LANG
+    if _i18n is not None:
+        try:
+            _LANG = _i18n.detect_lang()
+        except Exception:
+            _LANG = "es"
+
     try:
         payload = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):

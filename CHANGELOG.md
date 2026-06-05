@@ -2,6 +2,45 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado con [SemVer](https://semver.org/).
 
+## [0.6.0] — 2026-06-04
+
+### Added
+- **Soporte de idioma ES/EN configurable** vía `GITFLOW_LANG` (env) o
+  `git config gitflow-es.language` (default `es`). Nuevo módulo compartido
+  `hooks/i18n.py` con `detect_lang()`, `lang_explicitly_set()` y un diccionario
+  `MESSAGES` por idioma; los hooks `safety-check.py` y `session-context.py`
+  traducen sus mensajes en runtime. **Todo el texto generado** —prosa, mensajes de
+  commit y nombres de rama— se produce en el idioma configurado (los nombres de
+  rama usan palabras del idioma, siempre en kebab-case ASCII). Quedan fijos los
+  comandos git, los prefijos GitFlow y los tipos de Conventional Commits.
+- **Solicitud guiada del idioma**: `session-context` pide configurar el idioma
+  **después** de `git flow init` si aún no está inicializado, y **antes** de
+  cualquier acción de git si git-flow ya está inicializado pero el idioma no se ha
+  configurado. El skill `git` aplica esta precondición.
+- **Hook `PostToolUse` `post-gitflow-init.py`**: detecta un `git flow init`
+  exitoso y, si el idioma no está configurado, inyecta un mensaje
+  (`hookSpecificOutput.additionalContext`) para que Claude pregunte el idioma en el
+  mismo turno, sin esperar al próximo `SessionStart`.
+- **Skill `branch-name-suggester`**: propone 2-3 nombres de rama en kebab-case con
+  el prefijo GitFlow correcto a partir de una descripción libre (translitera tildes/ñ,
+  ≤50 chars, detecta tickets JIRA).
+- **Subagente `commit-message-writer`** (tool `Bash`): genera el mensaje de
+  Conventional Commits leyendo `git diff --staged` en contexto aislado.
+
+### Changed
+- `skills/git/SKILL.md` delega la propuesta de nombre de rama a
+  `branch-name-suggester` en el subcomando `start`.
+- `skills/commit/SKILL.md` delega la redacción del mensaje a `commit-message-writer`
+  (paso 5) y su regla de idioma pasó de "español" a "idioma configurado".
+- `rules/git-flow.md`, `rules/feature-docs.md`, los skills y los subagentes incluyen
+  una nota de idioma; los encabezados de formato fijo de los docs de feature nunca
+  se traducen.
+
+### Notes
+- Default `es` mantiene retrocompatibilidad total: sin configuración, el
+  comportamiento (y los textos) es idéntico a 0.5.2. Los nombres de rama, tipos de
+  commit, scopes y encabezados de los docs de feature nunca se traducen.
+
 ## [0.5.2] — 2026-04-23
 
 ### Added
@@ -58,6 +97,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado co
 - Skill `git` cubriendo start/finish/release/hotfix/status y operaciones básicas (add, push, pull, log, diff, stash, branch, checkout, merge, tag, undo, sync).
 - Rules empotradas: `rules/git-flow.md` (política del flujo) y `rules/feature-docs.md` (formato del doc al cerrar rama).
 
+[0.6.0]: #060--2026-06-04
 [0.5.2]: #052--2026-04-23
 [0.5.1]: #051--2026-04-23
 [0.5.0]: #050--2026-04-22
