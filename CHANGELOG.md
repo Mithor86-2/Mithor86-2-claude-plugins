@@ -2,6 +2,16 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado con [SemVer](https://semver.org/).
 
+## [0.7.1] — 2026-06-05
+
+### Changed
+- **Metadata del plugin**: `plugin.json` ahora declara el autor real y los campos
+  `homepage` y `repository`; antes tenía un autor placeholder.
+
+### Docs
+- README del plugin: nueva sección **Instalación**, corrección del conteo de hooks
+  ("dos" → "tres", tras añadir el `PostToolUse`) y sección de **Licencia**.
+
 ## [0.7.0] — 2026-06-05
 
 ### Added
