@@ -43,6 +43,8 @@ Opciones:
 - **URL completa:** `/plugin marketplace add https://github.com/Mithor86-2/Mithor86-2-claude-plugins`
 - **Ruta local** (para desarrollo): `/plugin marketplace add /ruta/absoluta/a/Mithor86-2-claude-plugins`
 
+> Si el repo es privado, igual funciona siempre que tengas acceso y `git clone` (SSH o HTTPS) ande en tu terminal: Claude Code reutiliza las credenciales de git del sistema.
+
 ### 3. Instalar el plugin
 
 ```
@@ -121,39 +123,6 @@ Mithor86-2-claude-plugins/
 ├── LICENSE
 ├── .gitignore
 └── README.md
-```
-
-## Cómo agregar más plugins al marketplace
-
-1. Crear una carpeta nueva en `plugins/<nombre-del-plugin>/` con su propio `.claude-plugin/plugin.json`.
-2. Agregar la entrada correspondiente en `.claude-plugin/marketplace.json`, en el array `plugins`.
-3. Commit, push, y pedir a quien lo use que corra `/plugin marketplace update Mithor86-2` seguido de `/plugin install <nombre>@Mithor86-2`.
-
-## Publicar el repo
-
-Para que el `/plugin marketplace add` funcione, este repo debe estar accesible por git:
-
-- **GitHub / GitLab público** — cualquiera con la URL puede instalar.
-- **Privado** — funciona si la persona tiene acceso y `git clone` vía SSH o HTTPS anda en su terminal. Claude Code reutiliza las credenciales de git del sistema.
-
-### Primer push
-
-```bash
-cd Mithor86-2-claude-plugins
-git init -b main
-git add .
-git commit -m "chore: initial release — gitflow-es v0.5.2"
-
-# Con gh CLI (recomendado)
-gh repo create Mithor86-2/Mithor86-2-claude-plugins --public --source=. --remote=origin --push
-
-# O sin gh CLI
-git remote add origin git@github.com:Mithor86-2/Mithor86-2-claude-plugins.git
-git push -u origin main
-
-# Tag de versión
-git tag -a v0.5.2 -m "Release 0.5.2"
-git push origin v0.5.2
 ```
 
 ## Licencia
