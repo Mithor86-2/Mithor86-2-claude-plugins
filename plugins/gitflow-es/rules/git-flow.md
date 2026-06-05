@@ -1,9 +1,11 @@
 # Git Flow
 
 > **EN:** This is the single source of truth for the team's Git Flow policy.
-> Content is authored in Spanish; assistant output to the user follows the
-> configured language (`GITFLOW_LANG` or `git config gitflow-es.language`,
-> default `es`). Branch names, commit types and scopes are never translated.
+> Content is authored in Spanish; all generated text — prose, **commit messages and
+> branch names** — follows the configured language (`GITFLOW_LANG` or
+> `git config gitflow-es.language`, default `es`). Branch names use
+> configured-language words but stay kebab-case ASCII. Only git commands, GitFlow
+> prefixes and Conventional Commit types/scopes are fixed and never translated.
 
 ## Ramas principales
 - `main` — código en producción. **Nunca se modifica directamente.**

@@ -33,7 +33,15 @@ El plugin responde en español por defecto, pero puede configurarse en inglés. 
 2. `git config gitflow-es.language` (ej. `git config gitflow-es.language en` para el repo actual, o `--global` para todos).
 3. Default: `es`.
 
-Cualquier valor fuera de `es`/`en` cae a español. El idioma afecta la **prosa** que se muestra al usuario: los mensajes de los hooks (`safety-check`, `session-context`) se traducen en runtime vía `hooks/i18n.py`, y los skills/subagentes detectan el idioma y responden en él. **No se traducen** los comandos git, los nombres de rama (kebab-case ASCII), los tipos de Conventional Commits (`feat`, `fix`…) ni los encabezados de formato fijo de los docs de feature.
+Cualquier valor fuera de `es`/`en` cae a español. El idioma afecta **todo el texto generado**: la prosa, los **mensajes de commit** y los **nombres de rama** (que usan palabras del idioma configurado, siempre en kebab-case ASCII transliterando tildes/ñ). Los mensajes de los hooks (`safety-check`, `session-context`) se traducen en runtime vía `hooks/i18n.py`, y los skills/subagentes detectan el idioma y responden en él. **Quedan fijos y nunca se traducen**: los comandos git, los prefijos GitFlow (`feature/`, `fix/`…), los tipos de Conventional Commits (`feat`, `fix`…) y los encabezados de formato fijo de los docs de feature.
+
+### Cuándo se solicita el idioma
+
+El plugin pide configurar el idioma en el momento adecuado (lo recuerda el `session-context` al iniciar sesión y lo aplica el skill `git`):
+
+- **Si git-flow no está inicializado:** primero se inicializa (`git flow init -d`) y, **después**, se pregunta el idioma y se guarda con `git config gitflow-es.language <es|en>`.
+- **Si git-flow ya está inicializado pero el idioma no está configurado:** se pregunta **antes** de realizar cualquier acción de git.
+- **Si ya está configurado:** se procede directamente.
 
 Ejemplos:
 

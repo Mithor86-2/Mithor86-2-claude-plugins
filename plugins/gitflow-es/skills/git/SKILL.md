@@ -13,14 +13,32 @@ Gestiona el ciclo de vida completo de ramas y commits siguiendo el modelo GitFlo
 ## Idioma de salida
 
 Antes de responder, detecta el idioma configurado para gitflow-es y produce
-**toda** tu salida al usuario en ese idioma:
+**todo** el texto generado en ese idioma — incluyendo prosa, **mensajes de commit y
+nombres de rama**:
 1. Si `GITFLOW_LANG` está definida, úsala.
 2. Si no, ejecuta `git config --get gitflow-es.language` y usa su valor.
 3. Si ninguna existe, usa español (`es`) por defecto.
 
-Valores válidos: `es` y `en`; cualquier otro se trata como `es`. Esto solo afecta la
-**prosa**: los comandos git, los nombres de rama (kebab-case ASCII) y los tipos de
-Conventional Commits (`feat`, `fix`…) no se traducen.
+Valores válidos: `es` y `en`; cualquier otro se trata como `es`. Los **nombres de
+rama** usan palabras del idioma configurado pero siempre en kebab-case ASCII
+(translitera tildes/ñ). Solo son fijos y **no se traducen**: los comandos git, los
+prefijos GitFlow (`feature/`, `fix/`…) y los tipos de Conventional Commits (`feat`,
+`fix`…).
+
+## Configuración de idioma (precondición)
+
+Antes de ejecutar **cualquier** acción de git, asegúrate de que el idioma de
+gitflow-es esté configurado (revisa `GITFLOW_LANG` o
+`git config --get gitflow-es.language`):
+
+- **Si NO está configurado y git-flow tampoco está inicializado:** primero
+  inicializa git-flow (`git flow init -d`, con OK del usuario) y **después**
+  pregúntale el idioma (`es`/`en`) y guárdalo con
+  `git config gitflow-es.language <lang>`.
+- **Si NO está configurado pero git-flow YA está inicializado:** pregúntale el
+  idioma **antes** de hacer la acción solicitada y guárdalo con
+  `git config gitflow-es.language <lang>`.
+- **Si ya está configurado:** procede; genera todos los textos en ese idioma.
 
 ## Uso
 

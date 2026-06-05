@@ -58,6 +58,19 @@ def gitflow_initialized() -> bool:
     return bool(run(["git", "config", "--get", "gitflow.branch.develop"]))
 
 
+def lang_set() -> bool:
+    """
+    True si el idioma de gitflow-es ya está configurado explícitamente. Si el
+    módulo i18n no está disponible, devolvemos True para no nag-ear sin razón.
+    """
+    if _i18n is None:
+        return True
+    try:
+        return _i18n.lang_explicitly_set()
+    except Exception:
+        return True
+
+
 def repo_has_commits() -> bool:
     """True si el repo tiene al menos un commit."""
     try:
@@ -139,6 +152,8 @@ def main() -> None:
             "```",
             "",
             _t("sc_no_commits_note"),
+            "",
+            _t("sc_lang_after_init"),
         ]
         print("\n".join(out))
         return
@@ -191,6 +206,20 @@ def main() -> None:
         out.append("```")
         out.append("")
         out.append(_t("sc_no_gitflow_explain"))
+        out.append("")
+        out.append(_t("sc_lang_after_init"))
+    elif not lang_set():
+        # git-flow ya inicializado pero el idioma no está configurado: pedirlo
+        # antes de cualquier acción de git.
+        out.append("")
+        out.append(_t("sc_lang_prompt_title"))
+        out.append(_t("sc_lang_prompt_body"))
+        out.append("")
+        out.append("```bash")
+        out.append("git config gitflow-es.language es   # o: en")
+        out.append("```")
+        out.append("")
+        out.append(_t("sc_lang_prompt_note"))
 
     print("\n".join(out))
 

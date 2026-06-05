@@ -56,6 +56,34 @@ def detect_lang(cwd=None) -> str:
     return DEFAULT_LANG
 
 
+def lang_explicitly_set(cwd=None) -> bool:
+    """
+    True si el idioma fue configurado explícitamente (env var válida o
+    `git config gitflow-es.language` con valor válido). False si solo aplicaría
+    el default. Se usa para decidir cuándo pedirle el idioma al usuario.
+    """
+    env = (os.environ.get("GITFLOW_LANG") or "").strip().lower()
+    if env in VALID_LANGS:
+        return True
+
+    cmd = ["git", "config", "--get", "gitflow-es.language"]
+    if cwd:
+        cmd = ["git", "-C", cwd, "config", "--get", "gitflow-es.language"]
+    try:
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=3,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip().lower() in VALID_LANGS
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    return False
+
+
 MESSAGES = {
     "es": {
         # --- safety-check ---
@@ -176,6 +204,23 @@ MESSAGES = {
             "`hotfix/`, `release/`, `support/`). Si el repo aún no tiene "
             "rama `develop`, git-flow la creará."
         ),
+        "sc_lang_after_init": (
+            "**Después** de inicializar git-flow, pregúntale al usuario en qué "
+            "idioma quiere los textos generados (mensajes de commit, nombres "
+            "de rama, docs) y guárdalo con `git config gitflow-es.language es` "
+            "(o `en`)."
+        ),
+        "sc_lang_prompt_title": "### ⚙️ Configura el idioma de gitflow-es",
+        "sc_lang_prompt_body": (
+            "git-flow está inicializado pero el idioma de gitflow-es no está "
+            "configurado. **Antes de ejecutar cualquier acción de git**, "
+            "pregúntale al usuario en qué idioma quiere los textos generados "
+            "(mensajes de commit, nombres de rama, docs) y guárdalo:"
+        ),
+        "sc_lang_prompt_note": (
+            "Mientras no se configure, se usa español (`es`) por defecto. Todos "
+            "los textos que se generen deben ir en el idioma configurado."
+        ),
     },
     "en": {
         # --- safety-check ---
@@ -294,6 +339,22 @@ MESSAGES = {
             "integration branch, and the standard prefixes (`feature/`, "
             "`hotfix/`, `release/`, `support/`). If the repo doesn't have a "
             "`develop` branch yet, git-flow will create it."
+        ),
+        "sc_lang_after_init": (
+            "**After** initializing git-flow, ask the user which language they "
+            "want for generated text (commit messages, branch names, docs) and "
+            "save it with `git config gitflow-es.language en` (or `es`)."
+        ),
+        "sc_lang_prompt_title": "### ⚙️ Configure gitflow-es language",
+        "sc_lang_prompt_body": (
+            "git-flow is initialized but the gitflow-es language isn't "
+            "configured. **Before running any git action**, ask the user "
+            "which language they want for generated text (commit messages, "
+            "branch names, docs) and save it:"
+        ),
+        "sc_lang_prompt_note": (
+            "Until configured, Spanish (`es`) is used by default. All "
+            "generated text must be written in the configured language."
         ),
     },
 }

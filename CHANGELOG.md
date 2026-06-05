@@ -7,10 +7,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado co
 ### Added
 - **Soporte de idioma ES/EN configurable** vía `GITFLOW_LANG` (env) o
   `git config gitflow-es.language` (default `es`). Nuevo módulo compartido
-  `hooks/i18n.py` con `detect_lang()` y un diccionario `MESSAGES` por idioma;
-  los hooks `safety-check.py` y `session-context.py` traducen sus mensajes en
-  runtime. Los skills y subagentes incluyen un bloque "Idioma de salida" que les
-  indica detectar el idioma y responder en él.
+  `hooks/i18n.py` con `detect_lang()`, `lang_explicitly_set()` y un diccionario
+  `MESSAGES` por idioma; los hooks `safety-check.py` y `session-context.py`
+  traducen sus mensajes en runtime. **Todo el texto generado** —prosa, mensajes de
+  commit y nombres de rama— se produce en el idioma configurado (los nombres de
+  rama usan palabras del idioma, siempre en kebab-case ASCII). Quedan fijos los
+  comandos git, los prefijos GitFlow y los tipos de Conventional Commits.
+- **Solicitud guiada del idioma**: `session-context` pide configurar el idioma
+  **después** de `git flow init` si aún no está inicializado, y **antes** de
+  cualquier acción de git si git-flow ya está inicializado pero el idioma no se ha
+  configurado. El skill `git` aplica esta precondición.
 - **Skill `branch-name-suggester`**: propone 2-3 nombres de rama en kebab-case con
   el prefijo GitFlow correcto a partir de una descripción libre (translitera tildes/ñ,
   ≤50 chars, detecta tickets JIRA).

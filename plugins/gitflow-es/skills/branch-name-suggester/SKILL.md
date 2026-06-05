@@ -18,10 +18,11 @@ Antes de responder, detecta el idioma configurado para gitflow-es y produce
 2. Si no, ejecuta `git config --get gitflow-es.language` y usa su valor.
 3. Si ninguna existe, usa español (`es`) por defecto.
 
-Valores válidos: `es` y `en`; cualquier otro se trata como `es`. Esto solo afecta
-la **prosa** (preguntas, explicaciones). Los **nombres de rama** que propongas van
-siempre en kebab-case ASCII en inglés/español según el contenido, pero **nunca con
-tildes, ñ ni espacios** (ver reglas abajo).
+Valores válidos: `es` y `en`; cualquier otro se trata como `es`. El idioma afecta
+tanto la **prosa** (preguntas, explicaciones) como las **palabras de los nombres de
+rama** que propongas (en `en` propón nombres en inglés; en `es`, en español). Los
+nombres van **siempre** en kebab-case ASCII: **nunca con tildes, ñ ni espacios** (ver
+reglas abajo). Los prefijos GitFlow (`feature/`, `fix/`…) son fijos.
 
 ## Fuente de verdad
 
@@ -34,6 +35,8 @@ uno. Consúltala ante cualquier duda de política. Los prefijos válidos son:
 - **Prefijo según el tipo**: infiérelo del verbo/intención ("agregar/añadir" →
   `feature/`; "arreglar/corregir" → `fix/`; "urgente en producción" → `hotfix/`;
   "actualizar deps/config" → `chore/`; "refactorizar/extraer" → `refactor/`).
+- **Idioma de las palabras**: usa el idioma configurado (en `en` propón nombres en
+  inglés, en `es` en español).
 - **kebab-case estricto**: solo `[a-z0-9-]`. **Translitera** tildes y ñ a ASCII
   (á→a, é→e, í→i, ó→o, ú→u, ü→u, ñ→n). Sin espacios ni mayúsculas.
 - **Longitud total ≤ 50 caracteres** (incluyendo el prefijo).
@@ -81,4 +84,12 @@ Usuario: "arreglar AUTH-456: el timeout de sesión es muy corto"
 Usuario: "necesito cambiar algo en el proyecto"
 → La descripción es muy genérica. ¿Qué quieres cambiar exactamente y de qué tipo
   es (feature, fix, chore, refactor)?
+```
+
+```
+[idioma configurado = en] User: "I want to add Google login"
+
+1. feature/google-login          ← recommended
+2. feature/login-with-google     (more descriptive)
+3. feature/google-auth           (technical, shorter)
 ```
