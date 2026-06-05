@@ -2,6 +2,18 @@
 
 Plugin de Git Flow para Claude Code con **idioma configurable (Español / English)**. Gestiona ramas, commits, releases y hotfixes siguiendo el modelo GitFlow, con validaciones y confirmaciones en cada paso. Por defecto responde en español; ver la sección "Idioma (ES / EN)".
 
+## Instalación
+
+Este plugin se distribuye en el marketplace **Mithor86-2**. Una vez añadido el marketplace, instálalo y recárgalo:
+
+```
+/plugin marketplace add Mithor86-2/Mithor86-2-claude-plugins
+/plugin install gitflow-es@Mithor86-2
+/reload-plugins
+```
+
+Para actualizar a una versión nueva: `/plugin marketplace update Mithor86-2` + `/reload-plugins`. Los pasos detallados (alta del marketplace, verificación, desinstalación) están en el [README del repositorio](../../README.md).
+
 ## Qué incluye
 
 Tres skills que Claude activa automáticamente según el contexto:
@@ -15,7 +27,7 @@ Y las **rules** que ambos skills comparten (fuente única de verdad del flujo):
 - `rules/git-flow.md` — ramas, nomenclatura, Conventional Commits, scopes del proyecto, flujo obligatorio.
 - `rules/feature-docs.md` — formato del doc que se genera al cerrar una rama.
 
-Y dos **hooks** que refuerzan el flujo a nivel mecánico (no dependen de que Claude recuerde las reglas):
+Y tres **hooks** que refuerzan el flujo a nivel mecánico (no dependen de que Claude recuerde las reglas):
 
 - **`PreToolUse` safety hook** — intercepta comandos Bash antes de ejecutarse y bloquea operaciones git peligrosas (ver sección "Safety hook" abajo).
 - **`PostToolUse` post-init hook** — tras un `git flow init` exitoso, si el idioma de gitflow-es no está configurado, le pide a Claude que pregunte el idioma en el acto (sin esperar al próximo arranque de sesión).
@@ -141,3 +153,7 @@ gitflow-es/
 │   └── session-context.py          ← SessionStart (imprime estado git)
 └── README.md
 ```
+
+## Licencia
+
+MIT — ver [LICENSE](../../LICENSE).
