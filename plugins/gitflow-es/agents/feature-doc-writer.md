@@ -12,6 +12,20 @@ Tu única tarea es: tomar una rama, leer sus commits y su diff contra la base, y
 
 No mergees, no hagas push, no modifiques archivos fuera de `docs/`.
 
+## Idioma de salida
+
+Detecta el idioma configurado para gitflow-es y redacta la **prosa** del doc
+(descripción, notas, resúmenes) en ese idioma:
+1. Si `GITFLOW_LANG` está definida, úsala.
+2. Si no, ejecuta `git config --get gitflow-es.language` y usa su valor.
+3. Si ninguna existe, usa español (`es`) por defecto.
+
+Valores válidos: `es` y `en`; cualquier otro se trata como `es`. **Importante:** los
+encabezados del template (`## Descripción`, `## Cambios de lógica de negocio`, etc.,
+definidos en `../../rules/feature-docs.md`) son de **formato fijo** y **NO se
+traducen** aunque el idioma sea `en` — otros procesos del equipo dependen de ellos.
+Tampoco se traducen nombres de archivos, comandos git ni tipos de commit.
+
 ---
 
 ## Flujo obligatorio

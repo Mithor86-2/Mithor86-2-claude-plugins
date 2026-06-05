@@ -10,6 +10,18 @@ Gestiona el ciclo de vida completo de ramas y commits siguiendo el modelo GitFlo
 > **Fuente única de verdad:** `../../rules/git-flow.md` (dentro de este plugin) define ramas principales, tipos de rama, nomenclatura, convención de commits, scopes y reglas del flujo obligatorio.
 > Este skill solo describe los comandos operativos. Consultar la rule cuando haya duda de política.
 
+## Idioma de salida
+
+Antes de responder, detecta el idioma configurado para gitflow-es y produce
+**toda** tu salida al usuario en ese idioma:
+1. Si `GITFLOW_LANG` está definida, úsala.
+2. Si no, ejecuta `git config --get gitflow-es.language` y usa su valor.
+3. Si ninguna existe, usa español (`es`) por defecto.
+
+Valores válidos: `es` y `en`; cualquier otro se trata como `es`. Esto solo afecta la
+**prosa**: los comandos git, los nombres de rama (kebab-case ASCII) y los tipos de
+Conventional Commits (`feat`, `fix`…) no se traducen.
+
 ## Uso
 
 ### GitFlow
@@ -52,8 +64,11 @@ Crea una rama desde la base correcta según el tipo.
 ### Flujo
 
 1. Verificar que no hay cambios sin commitear (`git status`)
-2. Según el tipo, usar el comando git-flow correspondiente o git manual
-3. Confirmar la rama creada y la base usada
+2. **Proponer el nombre de la rama** delegando al skill `branch-name-suggester`:
+   pásale la descripción libre del usuario; muestra las 2-3 alternativas en
+   kebab-case que devuelva y confirma una con el usuario antes de crear la rama.
+3. Según el tipo, usar el comando git-flow correspondiente o git manual
+4. Confirmar la rama creada y la base usada
 
 ### Tipos de ramas y comandos
 
@@ -68,7 +83,7 @@ Crea una rama desde la base correcta según el tipo.
 
 ### Reglas
 
-- Siempre en **kebab-case**, sin espacios ni caracteres especiales
+- Siempre en **kebab-case**, sin espacios ni caracteres especiales (el skill `branch-name-suggester` aplica estas reglas y propone alternativas)
 - Máximo 50 caracteres en el nombre
 - **Nunca** usar `git checkout -b` para tipos con soporte git-flow nativo (`feature`, `hotfix`, `release`)
 
