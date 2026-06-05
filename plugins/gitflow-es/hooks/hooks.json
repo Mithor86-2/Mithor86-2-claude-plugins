@@ -1,5 +1,5 @@
 {
-  "description": "Hooks del plugin gitflow-es: safety (PreToolUse sobre Bash/Write/Edit/MultiEdit/NotebookEdit) y context (SessionStart).",
+  "description": "Hooks del plugin gitflow-es: safety (PreToolUse sobre Bash/Write/Edit/MultiEdit/NotebookEdit), post-init (PostToolUse sobre Bash, pide idioma tras `git flow init`) y context (SessionStart).",
   "hooks": {
     "PreToolUse": [
       {
@@ -9,6 +9,18 @@
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/safety-check.py\"",
             "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/post-gitflow-init.py\"",
+            "timeout": 5
           }
         ]
       }

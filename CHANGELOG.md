@@ -17,6 +17,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado co
   **después** de `git flow init` si aún no está inicializado, y **antes** de
   cualquier acción de git si git-flow ya está inicializado pero el idioma no se ha
   configurado. El skill `git` aplica esta precondición.
+- **Hook `PostToolUse` `post-gitflow-init.py`**: detecta un `git flow init`
+  exitoso y, si el idioma no está configurado, inyecta un mensaje
+  (`hookSpecificOutput.additionalContext`) para que Claude pregunte el idioma en el
+  mismo turno, sin esperar al próximo `SessionStart`.
 - **Skill `branch-name-suggester`**: propone 2-3 nombres de rama en kebab-case con
   el prefijo GitFlow correcto a partir de una descripción libre (translitera tildes/ñ,
   ≤50 chars, detecta tickets JIRA).

@@ -18,7 +18,8 @@ Y las **rules** que ambos skills comparten (fuente única de verdad del flujo):
 Y dos **hooks** que refuerzan el flujo a nivel mecánico (no dependen de que Claude recuerde las reglas):
 
 - **`PreToolUse` safety hook** — intercepta comandos Bash antes de ejecutarse y bloquea operaciones git peligrosas (ver sección "Safety hook" abajo).
-- **`SessionStart` context hook** — al abrir Claude Code en un repo git, imprime un resumen del estado: rama actual, tipo GitFlow, cambios pendientes, ahead/behind respecto a origin. Si detecta que el repo no tiene `git flow init`, sugiere correrlo antes de arrancar.
+- **`PostToolUse` post-init hook** — tras un `git flow init` exitoso, si el idioma de gitflow-es no está configurado, le pide a Claude que pregunte el idioma en el acto (sin esperar al próximo arranque de sesión).
+- **`SessionStart` context hook** — al abrir Claude Code en un repo git, imprime un resumen del estado: rama actual, tipo GitFlow, cambios pendientes, ahead/behind respecto a origin. Si detecta que el repo no tiene `git flow init`, sugiere correrlo antes de arrancar; si ya está inicializado pero falta configurar el idioma, lo solicita.
 
 Y dos **subagentes** que delegan tareas específicas a un contexto aislado:
 
@@ -134,6 +135,7 @@ gitflow-es/
 │   ├── hooks.json                  ← registra los hooks en Claude Code
 │   ├── i18n.py                     ← mensajes ES/EN + detect_lang()
 │   ├── safety-check.py             ← PreToolUse (bloquea comandos peligrosos)
+│   ├── post-gitflow-init.py        ← PostToolUse (pide idioma tras git flow init)
 │   └── session-context.py          ← SessionStart (imprime estado git)
 └── README.md
 ```

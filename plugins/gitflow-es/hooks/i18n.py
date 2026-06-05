@@ -221,6 +221,13 @@ MESSAGES = {
             "Mientras no se configure, se usa español (`es`) por defecto. Todos "
             "los textos que se generen deben ir en el idioma configurado."
         ),
+        "post_init_lang_prompt": (
+            "git-flow se acaba de inicializar y el idioma de gitflow-es aún no "
+            "está configurado. Pregúntale ahora al usuario en qué idioma quiere "
+            "los textos generados (mensajes de commit, nombres de rama, docs) y "
+            "guárdalo con `git config gitflow-es.language es` (o `en`) antes de "
+            "continuar."
+        ),
     },
     "en": {
         # --- safety-check ---
@@ -355,6 +362,13 @@ MESSAGES = {
         "sc_lang_prompt_note": (
             "Until configured, Spanish (`es`) is used by default. All "
             "generated text must be written in the configured language."
+        ),
+        "post_init_lang_prompt": (
+            "git-flow was just initialized and the gitflow-es language isn't "
+            "configured yet. Ask the user now which language they want for "
+            "generated text (commit messages, branch names, docs) and save it "
+            "with `git config gitflow-es.language en` (or `es`) before "
+            "continuing."
         ),
     },
 }
