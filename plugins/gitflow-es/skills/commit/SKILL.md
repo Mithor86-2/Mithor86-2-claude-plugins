@@ -50,10 +50,10 @@ Tipos soportados adicionales no listados en la rule (uso puntual): `style`, `tes
 ## Ejemplos
 
 ```
-feat(auth): agregar validación de peso en onboarding
-fix(container): evitar crash de useFocusEffect fuera de NavigationContainer
-refactor(auth): extraer lógica de scroll-to-top en componente aislado
-chore(deps): actualizar expo sdk a 54.0.27
+feat(auth): agregar validación de email en onboarding
+fix(api): evitar crash al recibir respuesta vacía del servidor
+refactor(ui): extraer lógica de scroll-to-top en componente aislado
+chore(deps): actualizar dependencias a la última versión menor
 ```
 
 ## Reglas

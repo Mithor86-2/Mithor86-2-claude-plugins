@@ -37,17 +37,30 @@ release/<version>
 Descripción en **español**, imperativo, sin mayúscula inicial, sin punto final. Máximo 72 caracteres en la primera línea.
 
 ```
-feat(weight): agregar registro de peso semanal
-fix(auth): corregir validación de OTP expirado
-refactor(hooks): extraer lógica de useMutation
-chore(deps): actualizar expo-notifications a 0.32.16
-test(utils): agregar pruebas para maskEmail
-docs(hooks): documentar useWeightForm con JSDoc
+feat(auth): agregar inicio de sesión con Google
+fix(api): corregir manejo de timeout en peticiones
+refactor(ui): extraer lógica de formulario a hook reutilizable
+chore(deps): actualizar dependencias de desarrollo
+test(utils): agregar pruebas para formateo de fechas
+docs(api): documentar endpoints de autenticación
 ```
 
 ### Scopes del proyecto
-- Features: `auth`, `weight`, `nutrition`, `medication`, `mental`, `measure`, `fisical`, `dream`, `dashboard`, `profile`, `notification`
-- Infraestructura: `navigation`, `ui`, `store`, `api`, `hooks`, `constants`
+
+Los scopes son **propios de cada proyecto**: identifican el módulo o área afectada
+(p. ej. `auth`, `api`, `ui`, `deps`). No existe una lista universal — defínela según
+la estructura del repo.
+
+**Configurar la lista del proyecto** (opcional, recomendado): guarda los scopes
+válidos separados por comas y se usarán como referencia al redactar commits:
+
+```bash
+git config gitflow-es.scopes "auth,api,ui,store,hooks,deps,navigation"
+```
+
+Si no hay lista configurada, infiere el scope de las rutas tocadas en el diff
+(p. ej. cambios en `src/auth/**` → `auth`). Si ninguno encaja con claridad, omite
+el scope o usa el más cercano y deja una nota.
 
 ### Reglas de commit
 - **Nunca** commitear `.env`, credenciales ni binarios
@@ -106,6 +119,11 @@ El usuario puede solicitar commits directos en `develop` saltándose el flujo de
 ---
 
 ## Comandos git-flow por tipo de rama
+
+> **Nota:** este flujo usa `feature`, `hotfix` y `release`. git-flow también
+> ofrece `support` y `bugfix`; no forman parte del flujo del equipo, pero si se
+> usan, el hook de seguridad exige que el repo tenga `git flow init` igual que
+> con los demás subcomandos.
 
 ### Tipos con soporte nativo git-flow
 

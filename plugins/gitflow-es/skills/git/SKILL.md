@@ -46,7 +46,7 @@ gitflow-es esté configurado (revisa `GITFLOW_LANG` o
 
 ```
 /git start <tipo> <descripcion>   → Inicia una rama GitFlow desde la base correcta
-/git finish                        → Cierra la rama actual y genera el PR al destino correcto
+/git finish                        → Cierra la rama actual fusionándola (merge local) en su destino
 /git release <version>             → Inicia un ciclo de release
 /git hotfix <descripcion>          → Inicia un hotfix urgente desde main
 /git status                        → Muestra el estado GitFlow actual
@@ -125,6 +125,15 @@ Cierra la rama actual fusionándola en su destino según GitFlow.
 4. _(Opcional)_ Si el proyecto cuenta con un comando de pruebas (ej. `/run-tests`, `npm test`, `pytest`), puedes sugerirle al usuario ejecutarlo antes del finish. **No bloquear** el finish por esto: si el proyecto no tiene pruebas automatizadas, o el usuario prefiere omitirlas, continuar sin fricción.
 5. Mostrar resumen y pedir confirmación antes de fusionar
 6. Ejecutar el comando git-flow correspondiente (o git manual si no aplica)
+7. **Publicar el resultado** (con confirmación). El `finish` actualiza las ramas
+   base **solo en local**; el equipo no ve nada hasta que se haga push. Ofrecer
+   publicar según el tipo de rama:
+   - `feature/`, `fix/`, `refactor/`, `chore/` → `git push origin develop`
+   - `hotfix/`, `release/` → `git push origin main develop` y `git push origin --tags`
+     (estas ramas mergean en `main` **y** `develop` y crean tag)
+
+   **Nunca** hacer push sin confirmación explícita del usuario (ver "Reglas
+   generales de seguridad").
 
 ### Comandos por tipo de rama
 
@@ -158,7 +167,8 @@ Inicia el proceso formal de release siguiendo GitFlow.
 2. Crear rama `release/<version>` desde `develop`
 3. Mostrar los commits incluidos desde el último tag (`git log <ultimo-tag>..develop --oneline`)
 4. Recordar las tareas de release:
-   - Actualizar versión en `app.json`
+   - Actualizar la versión en el archivo del proyecto según el stack
+     (`package.json`, `app.json`, `pyproject.toml`, `Cargo.toml`, `composer.json`, etc.)
    - **Actualizar el `CHANGELOG`** delegando al subagente `release-notes-writer`: lee
      el rango de commits desde el último tag y genera el bloque del release agrupado
      por tipo Conventional (Keep a Changelog), escribiéndolo al inicio del
@@ -177,7 +187,7 @@ Inicia un hotfix urgente desde `main`.
 1. Verificar rama actual y cambios pendientes
 2. Cambiar a `main` y actualizar (`git pull origin main`)
 3. Crear rama `hotfix/<descripcion>` desde `main`
-4. Informar que al terminar se debe hacer PR a `main` **y** a `develop`
+4. Informar que al terminar se cierra con `/git finish`, que fusiona el hotfix en `main` **y** en `develop`
 
 ---
 
@@ -347,11 +357,16 @@ Revierte el último commit manteniendo los cambios en el working tree.
 **Flujo:**
 
 1. Mostrar el último commit: `git log --oneline -1`
-2. Pedir confirmación explícita
-3. Ejecutar `git reset --soft HEAD~1`
-4. Confirmar que los cambios siguen disponibles con `git status`
+2. **Verificar que el commit no fue pusheado**: comparar con el upstream
+   (`git log @{u}..HEAD --oneline`, o `git status -sb`). Si el último commit ya
+   está en `origin`, **detenerse y avisar** — deshacerlo reescribiría historial
+   compartido; ofrecer `git revert` en su lugar.
+3. Pedir confirmación explícita
+4. Ejecutar `git reset --soft HEAD~1`
+5. Confirmar que los cambios siguen disponibles con `git status`
 
-**Regla:** solo funciona en commits locales que no han sido pusheados.
+**Regla:** solo funciona en commits locales que no han sido pusheados. Si ya se
+pusheó, usar `git revert` (que crea un commit inverso) en vez de `undo`.
 
 ---
 
