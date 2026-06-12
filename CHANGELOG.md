@@ -2,6 +2,42 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado con [SemVer](https://semver.org/).
 
+## [0.8.0] — 2026-06-12
+
+### Added
+- **feat(hooks)**: reforzar `safety-check` con nuevos guards y corrección del
+  force-push. Arregla el regex que dejaba pasar flags cortos combinados (`-fv`,
+  `-vf`, `-fu`) sin bloquear el push a ramas protegidas, sin falsos positivos en
+  flags largos como `--follow-tags`. Agrega tres checks nuevos (con claves i18n
+  ES/EN): `git rebase` en main/master/develop, `git branch -d/-D/--delete` de
+  ramas protegidas y `git push --delete` / `push origin :rama` sobre
+  main/master/develop. (ce94875)
+
+### Changed
+- **refactor(plugin)**: genericizar la configuración de proyecto y mejorar los
+  flujos GitFlow. Quita los scopes y ejemplos atados a un proyecto concreto y los
+  hace configurables vía `git config gitflow-es.scopes`; el paso de release ya no
+  asume `app.json` (detecta el archivo de versión del stack). Alinea la
+  terminología de `finish` (merge local, no "PR"), agrega un paso de push tras
+  `finish` y una verificación en `undo` para no deshacer commits ya pusheados.
+  (c5707e6)
+
+### Docs
+- **docs**: enfocar el README en el consumidor del plugin, eliminando las secciones
+  de mantenedor y agregando una nota sobre repos privados en Instalación. (6ceb3a1)
+- **docs**: agregar instrucciones de instalación para Windows (git-flow-avh vía
+  Chocolatey/Scoop con Git Bash, Python 3, nota sobre el alias `python3` y entrada
+  de solución de problemas). (2169e7f)
+- **docs(plugin)**: reescribir el README con estructura completa (características,
+  requisitos, instalación, configuración, uso por skill, estructura, tabla de
+  skills, solución de problemas, contribución y licencia). (a735646)
+- **docs**: precisar que git flow solo se requiere para el ciclo nativo de
+  feature/hotfix/release; el resto del plugin funciona con git estándar. (7e59d10)
+
+### Other
+- **test(hooks)**: agregar suite pytest para `safety-check` e i18n, cubriendo cada
+  check del hook de seguridad y el módulo i18n (66 tests). (7613fc9)
+
 ## [0.7.1] — 2026-06-05
 
 ### Changed
