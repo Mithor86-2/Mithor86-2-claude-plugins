@@ -172,6 +172,7 @@ gitflow-es/
 │   ├── safety-check.py             ← PreToolUse: bloquea comandos git peligrosos
 │   ├── post-gitflow-init.py        ← PostToolUse: pide el idioma tras git flow init
 │   └── session-context.py          ← SessionStart: imprime el estado git
+├── tests/                          ← tests pytest de los hooks (safety + i18n)
 └── README.md
 ```
 
@@ -198,4 +199,5 @@ Subagentes (se invocan automáticamente desde los skills, no por el usuario): **
 ## Contribución y licencia
 
 - **Reportar bugs / proponer cambios:** abre un issue o un Pull Request en el repositorio: <https://github.com/Mithor86-2/Mithor86-2-claude-plugins>. Sigue Conventional Commits (el propio plugin te ayuda a redactarlos).
+- **Tests:** los hooks tienen cobertura con `pytest`. Córrelos con `python3 -m pytest plugins/gitflow-es/tests -q` (ver [tests/README.md](tests/README.md)).
 - **Licencia:** MIT — ver [LICENSE](../../LICENSE).

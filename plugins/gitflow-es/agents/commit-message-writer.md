@@ -35,9 +35,11 @@ Valores válidos: `es` y `en`; cualquier otro se trata como `es`. Los **tipos**
      un diff parcial.
 3. **Inferir el tipo dominante** del conjunto de cambios (mapea rutas/patrones a
    `feat`/`fix`/`refactor`/`chore`/`docs`/`test`/etc.).
-4. **Detectar el scope** por las rutas tocadas, usando la lista de scopes del
-   proyecto en `../../rules/git-flow.md`. Si ninguno encaja, usa el más cercano y
-   deja una nota.
+4. **Detectar el scope** por las rutas tocadas. Si el proyecto definió una lista
+   de scopes válidos (`git config --get gitflow-es.scopes`, separados por comas),
+   úsala como referencia; si no, infiere el scope de la estructura de rutas
+   (p. ej. `src/auth/**` → `auth`). Si ninguno encaja, omite el scope o usa el más
+   cercano y deja una nota. Ver `../../rules/git-flow.md`.
 5. **Redactar el asunto**: imperativo, sin mayúscula inicial, sin punto final,
    **≤72 caracteres** (re-recorta DESPUÉS de traducir si hiciera falta). Cuerpo
    opcional solo si el diff es complejo, explicando el "por qué".
