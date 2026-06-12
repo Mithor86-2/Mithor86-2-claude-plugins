@@ -119,6 +119,21 @@ MESSAGES = {
             "Si realmente lo necesitas, córrelo manualmente o usa `git "
             "clean -n` primero para previsualizar."
         ),
+        "rebase_protected": (
+            "Bloqueado: `git rebase` sobre `{branch}` reescribe el historial "
+            "compartido. No se permite reescribir `main`/`master`/`develop`. "
+            "Trabaja en una rama de trabajo y ciérrala con `/git finish`."
+        ),
+        "branch_delete_protected": (
+            "Bloqueado: intentas borrar la rama protegida `{branch}`. "
+            "`main`/`master`/`develop` no se eliminan. Si fue un error, revisa "
+            "el comando; si es intencional, hazlo manualmente en tu terminal."
+        ),
+        "push_delete_protected": (
+            "Bloqueado: `git push` intenta eliminar la rama remota `{branch}`. "
+            "Borrar `main`/`master`/`develop` en `origin` está prohibido por la "
+            "política del equipo."
+        ),
         "sensitive_env": (
             "Bloqueado: parece que estás intentando añadir `.env` al commit. "
             "Los archivos `.env` no deben versionarse — agrega el archivo a "
@@ -262,6 +277,22 @@ MESSAGES = {
             "Blocked: `git clean -f` deletes files without confirmation. If "
             "you really need it, run it manually or use `git clean -n` first "
             "to preview."
+        ),
+        "rebase_protected": (
+            "Blocked: `git rebase` on `{branch}` rewrites shared history. "
+            "Rewriting `main`/`master`/`develop` is not allowed. Work on a "
+            "working branch and close it with `/git finish`."
+        ),
+        "branch_delete_protected": (
+            "Blocked: you're trying to delete the protected branch `{branch}`. "
+            "`main`/`master`/`develop` must not be deleted. If it was a "
+            "mistake, check the command; if intentional, do it manually in "
+            "your terminal."
+        ),
+        "push_delete_protected": (
+            "Blocked: `git push` is trying to delete the remote branch "
+            "`{branch}`. Deleting `main`/`master`/`develop` on `origin` is "
+            "prohibited by team policy."
         ),
         "sensitive_env": (
             "Blocked: it looks like you're trying to add `.env` to the commit. "

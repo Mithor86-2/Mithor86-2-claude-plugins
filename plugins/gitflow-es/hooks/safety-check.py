@@ -22,12 +22,15 @@ Reglas aplicadas:
     4. git commit --author=... (regla del equipo)
     5. git reset --hard
     6. git clean -f / -fd / -xf (cualquier combinación con -f)
-    7. git add/commit que incluya archivos .env o de credenciales
-    8. git flow <feature|hotfix|release|support|bugfix> <sub> en un repo
+    7. git rebase estando parado en main/master/develop
+    8. git branch -d/-D/--delete de main/master/develop
+    9. git push --delete / push origin :rama que borre main/master/develop
+   10. git add/commit que incluya archivos .env o de credenciales
+   11. git flow <feature|hotfix|release|support|bugfix> <sub> en un repo
        que no tiene git-flow inicializado (falta `git flow init`)
 
   Para Write/Edit/MultiEdit/NotebookEdit:
-    9. Cualquier edición de archivo cuando la rama del repo que contiene el
+   12. Cualquier edición de archivo cuando la rama del repo que contiene el
        archivo es main o master (develop se permite — la excepción de commit
        directo en develop la maneja el skill `git` cuando el usuario lo
        solicita explícitamente).
@@ -57,6 +60,9 @@ except Exception:  # pragma: no cover - ruta de degradación
 
 EDIT_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 PROTECTED_BRANCHES = {"main", "master"}
+# Ramas cuyo historial nunca debe reescribirse ni eliminarse (incluye develop,
+# que sí acepta commits pero no rebase/borrado).
+PROTECTED_ALL = {"main", "master", "develop"}
 
 # Idioma resuelto una vez por proceso en main(); block() lo lee.
 _LANG = "es"
@@ -181,8 +187,12 @@ def check_force_push(command: str, branch: Optional[str]) -> None:
     if not re.search(r"\bgit\s+push\b", command):
         return
 
+    # Detecta force tanto en flag largo (`--force`, `--force-with-lease`) como en
+    # cualquier cluster de flags cortos que contenga `f` en cualquier posición
+    # (`-f`, `-fv`, `-vf`, `-fu`). El negative lookbehind `(?<!-)` evita matchear
+    # el segundo guion de un flag largo no relacionado (p. ej. `--follow-tags`).
     has_force = re.search(
-        r"(?:^|\s)(?:-f\b|-[a-zA-Z]*f\b|--force(?:-with-lease)?\b)",
+        r"(?:(?<![-\w])--force(?:-with-lease)?\b|(?<!-)-[a-zA-Z]*f[a-zA-Z]*\b)",
         command,
     )
     if not has_force:
@@ -237,6 +247,51 @@ def check_clean_force(command: str, _branch: Optional[str]) -> None:
     """Bloquea git clean con -f."""
     if re.search(r"\bgit\s+clean\b(?:.*\s)?-[a-zA-Z]*f[a-zA-Z]*\b", command):
         block(_t("clean_force"))
+
+
+def check_rebase_protected(command: str, branch: Optional[str]) -> None:
+    """Bloquea `git rebase` estando parado en main/master/develop."""
+    if not re.search(r"\bgit\s+rebase\b", command):
+        return
+    # Permitir la gestión de un rebase ya en curso (no reescribe nada nuevo).
+    if re.search(
+        r"\bgit\s+rebase\s+--(?:continue|abort|skip|quit|edit-todo|show-current-patch)\b",
+        command,
+    ):
+        return
+    if branch in PROTECTED_ALL:
+        block(_t("rebase_protected", branch=branch))
+
+
+def check_branch_delete_protected(command: str, _branch: Optional[str]) -> None:
+    """Bloquea `git branch -d/-D/--delete` sobre una rama protegida."""
+    m = re.search(r"\bgit\s+branch\b(.*)", command)
+    if not m:
+        return
+    rest = m.group(1)
+    has_delete = re.search(r"(?:^|\s)(?:-[a-zA-Z]*[dD]\b|--delete\b)", rest)
+    if not has_delete:
+        return
+    for prot in PROTECTED_ALL:
+        if re.search(rf"(?:^|\s|/){re.escape(prot)}(?:\s|$)", rest):
+            block(_t("branch_delete_protected", branch=prot))
+
+
+def check_push_delete_protected(command: str, _branch: Optional[str]) -> None:
+    """
+    Bloquea el borrado remoto de ramas protegidas, en sus dos formas:
+      - `git push origin --delete main` / `git push origin -d main`
+      - `git push origin :main` (refspec de borrado, con o sin refs/heads/)
+    """
+    if not re.search(r"\bgit\s+push\b", command):
+        return
+
+    has_delete = re.search(r"(?:^|\s)(?:--delete\b|-d\b)", command)
+    for prot in PROTECTED_ALL:
+        if has_delete and re.search(rf"(?:^|\s|/){re.escape(prot)}(?:\s|$)", command):
+            block(_t("push_delete_protected", branch=prot))
+        if re.search(rf"(?:^|\s)\+?:(?:refs/heads/)?{re.escape(prot)}(?:\s|$)", command):
+            block(_t("push_delete_protected", branch=prot))
 
 
 def check_sensitive_files(command: str, _branch: Optional[str]) -> None:
@@ -296,6 +351,9 @@ BASH_CHECKS = [
     check_explicit_author,
     check_reset_hard,
     check_clean_force,
+    check_rebase_protected,
+    check_branch_delete_protected,
+    check_push_delete_protected,
     check_sensitive_files,
     check_gitflow_not_initialized,
 ]
