@@ -73,6 +73,15 @@ el scope o usa el más cercano y deja una nota.
 ## Flujo Obligatorio con Claude (antes de cualquier cambio)
 
 > **Es obligatorio usar los comandos de git-flow.** Claude nunca debe crear o cerrar ramas manualmente cuando existe un comando git-flow equivalente.
+>
+> **Precondición — git-flow inicializado.** Antes de una acción del modelo GitFlow
+> o de escritura (`start`, `finish`, `release`, `hotfix`, `commit`, `merge`,
+> `push`, `tag`), verifica que git-flow esté inicializado
+> (`git config --get gitflow.branch.develop`). Si **no** lo está, **pide
+> confirmación** al usuario para ejecutar `git flow init -d`: si acepta,
+> inicialízalo y continúa; si rechaza, sigue con `git` estándar cuando la acción
+> lo permita. Las acciones de solo lectura (`status`, `log`, `diff`, `branch`,
+> `checkout`, `stash`, `pull`, `sync`) no requieren esta validación.
 
 1. Verificar la rama activa con `/git status`
 2. **Nunca** modificar archivos directamente sobre `main` o `develop`

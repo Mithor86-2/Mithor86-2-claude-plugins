@@ -18,6 +18,15 @@ Antes de responder, detecta el idioma configurado para gitflow-es y produce
 Valores válidos: `es` y `en`; cualquier otro se trata como `es`. El idioma afecta el
 **asunto/cuerpo** del commit, pero los tipos (`feat`, `fix`…) y scopes no se traducen.
 
+## Precondición: git-flow inicializado
+
+El commit es una acción de escritura. **Antes** de redactar/aplicar, verifica si
+git-flow está inicializado (`git config --get gitflow.branch.develop`; vacío = no).
+Si **no** lo está, **pide confirmación** al usuario para inicializarlo con
+`git flow init -d`: si acepta, inicialízalo y continúa; si rechaza, continúa con el
+commit en `git` estándar sin volver a insistir. Ver la sección homónima del skill
+`git` para el detalle.
+
 ## Flujo
 
 1. Ejecutar `git status` — verificar qué archivos están staged
