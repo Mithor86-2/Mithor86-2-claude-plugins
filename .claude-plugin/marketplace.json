@@ -8,8 +8,8 @@
     {
       "name": "gitflow-es",
       "source": "./plugins/gitflow-es",
-      "description": "Skills de Git Flow con idioma ES/EN configurable (`git`, `commit`, `branch-name-suggester`), rules empotradas, hooks de seguridad (bloquea force-push, commits a main, reset --hard, ediciones de archivos en main/master, y comandos `git flow` en repos sin `git flow init`) y los subagentes `feature-doc-writer`, `commit-message-writer` y `release-notes-writer`.",
-      "version": "0.7.1",
+      "description": "Skills de Git Flow con idioma ES/EN configurable (`git`, `commit`, `branch-name-suggester`), scopes de commit configurables, rules empotradas, hooks de seguridad (bloquea force-push, commits a main, reset --hard, clean -f, rebase/borrado de ramas protegidas, push que borra main/master/develop, commits con .env, ediciones de archivos en main/master, y comandos `git flow` en repos sin `git flow init`) y los subagentes `feature-doc-writer`, `commit-message-writer` y `release-notes-writer`.",
+      "version": "0.9.0",
       "category": "git",
       "keywords": ["git", "gitflow", "commit", "conventional-commits", "espanol", "english", "i18n", "workflow", "changelog"]
     }

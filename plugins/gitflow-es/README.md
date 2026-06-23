@@ -1,8 +1,10 @@
 # gitflow-es
 
-![versión](https://img.shields.io/badge/versi%C3%B3n-0.7.1-blue)
+![versión](https://img.shields.io/badge/versi%C3%B3n-0.9.0-blue)
 ![licencia](https://img.shields.io/badge/licencia-MIT-green)
 ![idioma](https://img.shields.io/badge/idioma-ES%20%2F%20EN-orange)
+
+**Repositorio:** <https://github.com/Mithor86-2/Mithor86-2-claude-plugins> · **Plugin:** [`plugins/gitflow-es`](https://github.com/Mithor86-2/Mithor86-2-claude-plugins/tree/main/plugins/gitflow-es)
 
 Plugin de **Git Flow para Claude Code** con idioma configurable (Español / English). Gestiona ramas, commits, releases y hotfixes siguiendo el modelo GitFlow, reforzado con hooks de seguridad y subagentes que generan documentación, mensajes de commit y changelogs a partir del histórico git real.
 
