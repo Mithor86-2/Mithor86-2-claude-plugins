@@ -2,6 +2,18 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado con [SemVer](https://semver.org/).
 
+## [0.9.0] — 2026-06-12
+
+### Added
+- **Precondición de git-flow inicializado**: antes de una acción del modelo GitFlow
+  o de escritura (`start`, `finish`, `release`, `hotfix`, `commit`, `merge`, `push`,
+  `tag`), el skill `git` (y `commit`) verifica si git-flow está inicializado
+  (`git config --get gitflow.branch.develop`) y, si no lo está, pide confirmación al
+  usuario para ejecutar `git flow init -d`. Si el usuario rechaza, continúa con `git`
+  estándar cuando la acción lo permite. Las acciones de solo lectura (`status`,
+  `log`, `diff`, `branch`, `checkout`, `stash`, `pull`, `sync`) no la requieren.
+  Documentado también en la rule `git-flow.md`.
+
 ## [0.8.0] — 2026-06-12
 
 ### Added

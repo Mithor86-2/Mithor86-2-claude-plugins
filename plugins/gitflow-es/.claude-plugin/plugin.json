@@ -1,6 +1,6 @@
 {
   "name": "gitflow-es",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Skills de Git Flow con soporte de idioma ES/EN configurable (`GITFLOW_LANG` o `git config gitflow-es.language`, default es): skills `git`, `commit` y `branch-name-suggester`, rules empotradas, scopes de commit configurables (`git config gitflow-es.scopes`), hooks de seguridad (PreToolUse bloquea force-push, commits a main, reset --hard, clean -f, rebase/borrado de ramas protegidas, push que borra main/master/develop, commits con .env, ediciones de archivos en main/master, y comandos `git flow` en repos sin init; SessionStart informa estado git y sugiere `git flow init -d` si falta) y los subagentes `feature-doc-writer` (doc de la rama al cerrarla), `commit-message-writer` (mensaje de commit desde el diff staged) y `release-notes-writer` (CHANGELOG agrupado por tipo Conventional al hacer release).",
   "author": {
     "name": "Mithor86-2",
