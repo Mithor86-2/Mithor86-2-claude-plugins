@@ -25,19 +25,42 @@ rama** usan palabras del idioma configurado pero siempre en kebab-case ASCII
 prefijos GitFlow (`feature/`, `fix/`…) y los tipos de Conventional Commits (`feat`,
 `fix`…).
 
+## Precondición: git-flow inicializado
+
+**Antes** de ejecutar una acción del modelo GitFlow o que modifique el repo,
+verifica si git-flow está inicializado:
+
+```bash
+git config --get gitflow.branch.develop   # vacío / sin salida = NO inicializado
+```
+
+**Aplica a:** `start`, `finish`, `release`, `hotfix`, `commit`, `merge`, `push`, `tag`.
+**No aplica a** las acciones de solo lectura o consulta: `status`, `log`, `diff`,
+`branch`, `checkout`, `stash`, `pull`, `sync` (estas proceden sin validar init).
+
+- **Si YA está inicializado:** procede con la acción.
+- **Si NO está inicializado:** **detente y pide confirmación al usuario** para
+  inicializarlo con los defaults del equipo:
+  - Si **acepta** → ejecuta `git flow init -d` y luego continúa con la acción
+    solicitada.
+  - Si **rechaza** → no inicialices. Continúa con `git` estándar cuando la acción
+    lo permita (`fix`/`refactor`/`chore`, commit, merge, push, tag), advirtiendo
+    que los comandos `git flow` nativos (`feature`/`hotfix`/`release start/finish`)
+    no estarán disponibles hasta inicializar. No vuelvas a insistir en la misma
+    sesión salvo que el usuario invoque un subcomando que **requiera** git-flow.
+
+> El hook `safety-check` ya bloquea los subcomandos `git flow <feature|hotfix|release>`
+> en repos sin init; esta precondición es la capa conversacional que ofrece resolverlo.
+
 ## Configuración de idioma (precondición)
 
-Antes de ejecutar **cualquier** acción de git, asegúrate de que el idioma de
+Una vez resuelta la precondición de git-flow (arriba), asegúrate de que el idioma de
 gitflow-es esté configurado (revisa `GITFLOW_LANG` o
 `git config --get gitflow-es.language`):
 
-- **Si NO está configurado y git-flow tampoco está inicializado:** primero
-  inicializa git-flow (`git flow init -d`, con OK del usuario) y **después**
-  pregúntale el idioma (`es`/`en`) y guárdalo con
-  `git config gitflow-es.language <lang>`.
-- **Si NO está configurado pero git-flow YA está inicializado:** pregúntale el
-  idioma **antes** de hacer la acción solicitada y guárdalo con
-  `git config gitflow-es.language <lang>`.
+- **Si NO está configurado:** pregúntale el idioma (`es`/`en`) **antes** de hacer la
+  acción solicitada y guárdalo con `git config gitflow-es.language <lang>`. (Si
+  acabas de inicializar git-flow en el paso anterior, pídelo justo después del init.)
 - **Si ya está configurado:** procede; genera todos los textos en ese idioma.
 
 ## Uso
