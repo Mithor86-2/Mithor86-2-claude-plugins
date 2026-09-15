@@ -1,7 +1,7 @@
 {
   "name": "gitflow-es",
-  "version": "0.9.0",
-  "description": "Skills de Git Flow con soporte de idioma ES/EN configurable (`GITFLOW_LANG` o `git config gitflow-es.language`, default es): skills `git`, `commit` y `branch-name-suggester`, rules empotradas, scopes de commit configurables (`git config gitflow-es.scopes`), hooks de seguridad (PreToolUse bloquea force-push, commits a main, reset --hard, clean -f, rebase/borrado de ramas protegidas, push que borra main/master/develop, commits con .env, ediciones de archivos en main/master, y comandos `git flow` en repos sin init; SessionStart informa estado git y sugiere `git flow init -d` si falta) y los subagentes `feature-doc-writer` (doc de la rama al cerrarla), `commit-message-writer` (mensaje de commit desde el diff staged) y `release-notes-writer` (CHANGELOG agrupado por tipo Conventional al hacer release).",
+  "version": "0.10.0",
+  "description": "Skills de Git Flow con soporte de idioma ES/EN configurable (`GITFLOW_LANG` o `git config gitflow-es.language`, default es): skills `git`, `commit`, `branch-name-suggester`, `worktrees` y `tiempos`. Trabaja siempre en worktrees creados desde `develop` (el repo principal queda como worktree de control), reparte tareas independientes en paralelo y registra el tiempo de cada rama separando trabajo, pruebas, espera del usuario e inactividad, con los tiempos muertos validados contra `mtime` de archivos y timestamps de commits. Incluye rules empotradas, scopes configurables, hooks de seguridad (bloquea force-push, commits a main, reset --hard, clean -f, rebase/borrado de ramas protegidas, commits con .env, ediciones en main/master, `git flow` sin init y el `git flow finish` dentro del worktree de la rama, que reporta éxito sin mergear) y los subagentes `feature-doc-writer`, `commit-message-writer` y `release-notes-writer`.",
   "author": {
     "name": "Mithor86-2",
     "email": "ing.migueltorrescubillos@gmail.com"
@@ -10,8 +10,22 @@
   "repository": "https://github.com/Mithor86-2/Mithor86-2-claude-plugins",
   "license": "MIT",
   "keywords": [
-    "git", "gitflow", "commit", "conventional-commits",
-    "espanol", "english", "i18n", "workflow", "branches", "branch-naming",
-    "changelog", "release-notes"
+    "git",
+    "gitflow",
+    "commit",
+    "conventional-commits",
+    "espanol",
+    "english",
+    "i18n",
+    "workflow",
+    "branches",
+    "branch-naming",
+    "changelog",
+    "release-notes",
+    "worktree",
+    "worktrees",
+    "paralelo",
+    "time-tracking",
+    "tiempos"
   ]
 }

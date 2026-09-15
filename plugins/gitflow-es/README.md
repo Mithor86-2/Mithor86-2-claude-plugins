@@ -1,6 +1,6 @@
 # gitflow-es
 
-![versión](https://img.shields.io/badge/versi%C3%B3n-0.9.0-blue)
+![versión](https://img.shields.io/badge/versi%C3%B3n-0.10.0-blue)
 ![licencia](https://img.shields.io/badge/licencia-MIT-green)
 ![idioma](https://img.shields.io/badge/idioma-ES%20%2F%20EN-orange)
 

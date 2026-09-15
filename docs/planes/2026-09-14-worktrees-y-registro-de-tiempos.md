@@ -4,7 +4,7 @@
 - **Rama:** `feature/worktrees-y-registro-de-tiempos`
 - **Worktree:** `../Mithor86-2-claude-plugins-worktrees/feature-worktrees-y-registro-de-tiempos` (base: `develop`)
 - **Autor:** Miguel Torres
-- **Estado global:** 🟡 En proceso
+- **Estado global:** ✅ Finalizada
 - **Requerimiento:** Extender el plugin `gitflow-es` con (1) validación y configuración guiada de git-flow al abrir sesión, (2) regla de trabajar siempre en worktrees creados desde `develop`, (3) soporte para paralelizar trabajo con worktrees y (4) un registro de tiempos por rama que separe trabajo, pruebas, espera del usuario e inactividad.
 
 ## Alcance
@@ -189,14 +189,60 @@ El registro no guarda solo duraciones: cada rama y cada ventana de trabajo lleva
 ### Fase 5 — Cierre
 | # | Tarea | Estado |
 |---|-------|--------|
-| 5.1 | Suite completa en verde: `python3.8 -m pytest plugins/gitflow-es/tests -q` | ⬜ Pendiente |
-| 5.2 | Prueba manual: ciclo worktree completo + **flujo paralelo con dos worktrees desechables** desde `develop`, verificando atribución de tiempos por rama y el bloqueo del finish roto | ⬜ Pendiente |
-| 5.3 | Resumen + pasos de pruebas manuales en este plan (sin desglose de tiempos, por C8) | ⬜ Pendiente |
-| 5.4 | CHANGELOG `[0.10.0]` + bump en `plugin.json`, `marketplace.json` y badge del README | ⬜ Pendiente |
+| 5.1 | Suite completa en verde: `python3.8 -m pytest plugins/gitflow-es/tests -q` | ✅ Finalizada |
+| 5.2 | Prueba manual: ciclo worktree completo + **flujo paralelo con dos worktrees desechables** desde `develop`, verificando atribución de tiempos por rama y el bloqueo del finish roto | ✅ Finalizada |
+| 5.3 | Resumen + pasos de pruebas manuales en este plan (sin desglose de tiempos, por C8) | ✅ Finalizada |
+| 5.4 | CHANGELOG `[0.10.0]` + bump en `plugin.json`, `marketplace.json` y badge del README | ✅ Finalizada |
 | 5.5 | `/git finish`: feature-doc, remover worktree, merge local a `develop` desde el control y verificación de postcondiciones (sin push) | ⬜ Pendiente |
+
+## Resumen y pruebas manuales
+
+### Qué quedó implementado
+
+| Ajuste pedido | Cómo se resolvió |
+|---------------|------------------|
+| 1. Validar git-flow al abrir sesión y ofrecer configurarlo | `session-context.py` reporta worktree de control vs. de trabajo, worktrees activos, checklist de configuración y tiempo acumulado de la rama; el subcomando `/git init` deja git-flow, idioma, raíz de worktrees, registro de tiempos y scopes en un paso |
+| 2. Worktrees siempre, desde `develop` | Regla en `git-flow.md` + `start`/`finish`/`sync`/`worktree` del skill `git`; el hook avisa cuando no se sigue y **bloquea** el único caso que corrompe el cierre (`git flow finish` dentro del worktree de la rama) |
+| 3. Paralelizar con worktrees desde `develop` | Skill `worktrees` + sección "Trabajo en paralelo" en la rule: criterio de independencia, base actualizada una vez, un ejecutor por worktree, cierres secuenciales y refresco desde `develop` entre cierres |
+| 4. Registro de tiempos con tiempos muertos y pruebas por separado | `timelog.py` + `time-tracker.py` + `time-report.py` + skill `tiempos`: cinco rubros que suman el reloj, pruebas medidas aparte, tiempos muertos validados contra `mtime` y commits, y descripción corta del trabajo por rama, ventana y commit |
+
+### Bugs encontrados y corregidos durante el desarrollo
+
+1. **`git flow finish` miente** (git-flow-avh 0.4.1): dentro del worktree de la rama no mergea, no borra la rama y sale con código 0 igual. Se bloquea ese caso y el finish verifica postcondiciones.
+2. **`check_force_push` bloqueaba comandos legítimos**: leía la línea completa y tomaba el `-ff` de `--no-ff` como flag de force. Ahora evalúa por segmento de comando.
+3. **Rutas muertas en los subagentes**: referenciaban `../../rules/`, que desde `agents/` apunta fuera del plugin.
+4. **Parseo de `git status --porcelain`**: el `.strip()` de `run_git` se come el espacio del código de estado, así que las rutas salían mutiladas y el escaneo de evidencia no encontraba nada.
+5. **Sello de evidencia**: se escribía al terminar el escaneo; un archivo modificado mientras corría quedaba fuera para siempre.
+6. **Doble conteo de commits** como evidencia (evento en vivo + `git log`).
+7. **Falsos positivos de comandos de prueba**: una ruta como `/tmp/pytest-of-user/` contaba como corrida de tests.
+
+### Pruebas automatizadas
+
+`python3.8 -m pytest plugins/gitflow-es/tests -q` → **195 tests en verde** (74 antes de este trabajo).
+
+### Pruebas manuales — ⚠️ pendientes de validación humana
+
+| # | Escenario | Pasos | Resultado esperado |
+|---|-----------|-------|--------------------|
+| 1 | Instalación de la versión nueva | `/plugin marketplace update Mithor86-2` y `/reload-plugins` | Resumen con **5 skills · 3 agents · 8 hooks**; si los hooks quedan en 0, correr `/doctor` |
+| 2 | Arranque de sesión configurado | Abrir Claude Code en este repo | Bloque de estado con rama, worktree de trabajo, worktrees activos y línea de tiempos; sin bloque de configuración |
+| 3 | Arranque sin configurar | Abrir una sesión en un repo sin `git flow init` | Aviso de git-flow faltante + checklist con ⬜ y oferta de `/git init` |
+| 4 | Ciclo completo de rama | `/git start feature <descripción>` → trabajar → `/git finish` | Worktree creado desde `develop`, cierre desde el control con worktree removido y verificación de que la rama se borró y sus commits están en `develop` |
+| 5 | Guarda del finish roto | Dentro del worktree de una rama, pedir `git flow feature finish <x>` | El hook lo bloquea y explica por qué |
+| 6 | Lote paralelo | `/worktrees paralelo` con dos tareas independientes | Dos worktrees desde `develop`, trabajo simultáneo, cierres de a uno con refresco desde `develop` |
+| 7 | Reporte de tiempos | `/tiempos` tras una sesión real de trabajo | Cinco rubros que suman el total, pruebas separadas y tabla de actividad con descripciones y commits |
+| 8 | Validación de tiempos muertos | Editar archivos del worktree fuera de Claude 20 minutos y volver | Ese rato aparece como *trabajo fuera de sesión*, no como inactividad |
+| 9 | Privacidad del registro | `git status` y `git log` tras varias sesiones | El registro nunca aparece; vive en `.git/gitflow-es/tiempos/` |
+
+### Limitaciones conocidas
+
+- La evidencia por `mtime` no distingue quién escribió: un autoguardado del editor o un formateador que toque archivos dentro de un hueco cuenta como trabajo externo. Se apaga con `git config gitflow-es.evidence off`.
+- La atribución de trabajo en paralelo se apoya en `cd <ruta>` o `git -C <ruta>` dentro del comando; trabajo dirigido a otro worktree por otros medios se le carga a la rama de la sesión.
+- El plugin instalado en la sesión donde se desarrolló seguía siendo 0.9.0, así que los hooks nuevos se probaron inyectando payloads reales y en repos de laboratorio, no por activación automática del harness.
 
 ## Bitácora
 
+- 2026-09-15 — Fase 5: suite en verde (195 tests), laboratorio del ciclo completo y del lote paralelo con dos worktrees, verificación del bloqueo (exit 2 dentro del worktree linked, 0 desde el control), release 0.10.0 en CHANGELOG, `plugin.json`, `marketplace.json` y badge.
 - 2026-09-15 — Fase 4 finalizada: `timelog.py` (agregación aditiva, evidencia, append atómico), `time-tracker.py` (8 eventos + CLI), `time-report.py` (ES/EN, markdown y JSON), skill `tiempos` y wiring de hooks. La prueba end-to-end destapó tres bugs, ya corregidos con test: rutas mutiladas al parsear `git status --porcelain` (el `.strip()` de `run_git` se come el espacio del código de estado), el sello de evidencia escrito al final del escaneo en vez del inicio, y un mismo commit contado dos veces como evidencia. También se ajustó el regex de comandos de test para que una ruta como `/tmp/pytest-of-user/` no cuente como corrida. Suite: 195 tests en verde.
 - 2026-09-15 — Fase 3 finalizada: skill `worktrees` (criterio de independencia, lote paralelo, cierre secuencial, tabla de errores de git) y sección "Trabajo en paralelo" en la rule. Los tests estructurales nuevos detectaron que los dos agentes referenciaban `../../rules/` (ruta muerta desde `agents/`); corregido a `../rules/`. Suite: 123 tests en verde.
 - 2026-09-15 — Fase 2 finalizada: política de worktrees en la rule y el skill `git`, módulo compartido `gitwt.py`, bloqueo del finish en worktree linked, cuatro avisos no bloqueantes y subcomando `/git worktree`. **Bug encontrado de paso:** `check_force_push` leía todo el comando compuesto y tomaba el `-ff` de `--no-ff` como flag de force — bloqueaba flujos legítimos del propio plugin. Corregido con segmentación por comando y lookbehind más estricto, con tests de regresión. Suite: 103 tests en verde.
