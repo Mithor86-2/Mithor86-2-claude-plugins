@@ -16,7 +16,7 @@ Plugin de **Git Flow para Claude Code** con idioma configurable (Español / Engl
 - **Skill `worktrees`** — una rama, un worktree: crea, lista y limpia worktrees, y reparte tareas independientes en paralelo desde `develop`.
 - **Skill `tiempos`** — registro de tiempos por rama: separa trabajo, pruebas, espera e inactividad, valida los tiempos muertos con evidencia real y guarda una descripción corta de lo hecho.
 - **3 subagentes** (contexto aislado): `feature-doc-writer` (doc de la rama al cerrarla), `commit-message-writer` (mensaje de commit desde el diff) y `release-notes-writer` (CHANGELOG agrupado por tipo Conventional).
-- **3 hooks mecánicos**: `PreToolUse` (bloquea operaciones git peligrosas), `PostToolUse` (pide el idioma tras `git flow init`) y `SessionStart` (imprime el estado GitFlow al abrir el repo).
+- **Hooks mecánicos**: `PreToolUse` (bloquea operaciones git peligrosas y avisa cuando no se sigue la política de worktrees), `PostToolUse` (pide el idioma tras `git flow init`), `SessionStart` (estado GitFlow y configuración pendiente) y el registro de tiempos enganchado a `SessionStart`, `UserPromptSubmit`, `Stop`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `Notification` y `SessionEnd`.
 - **Idioma ES/EN configurable** — todo el texto generado (prosa, mensajes de commit, nombres de rama) sale en el idioma elegido.
 - **Rules empotradas** — política de ramas y formato de docs como fuente única de verdad.
 
@@ -65,7 +65,7 @@ Verifica que quedó activo:
 /plugin
 ```
 
-Deberías ver `gitflow-es` habilitado y un resumen tipo `3 skills · 3 agents · 3 hooks`. Si los hooks aparecen en `0`, corre `/doctor`.
+Deberías ver `gitflow-es` habilitado y un resumen tipo `5 skills · 3 agents · 8 hooks`. Si los hooks aparecen en `0`, corre `/doctor`.
 
 Para actualizar a una versión nueva:
 

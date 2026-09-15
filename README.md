@@ -59,7 +59,7 @@ Eso instala los skills (`git` y `commit`), el subagente (`feature-doc-writer`), 
 /reload-plugins
 ```
 
-Deberías ver un resumen tipo `2 skills · 1 agents · 2 hooks` (si los hooks quedan en `0`, corre `/doctor` para ver el error).
+Deberías ver un resumen tipo `5 skills · 3 agents · 8 hooks` (si los hooks quedan en `0`, corre `/doctor` para ver el error).
 
 Luego:
 
