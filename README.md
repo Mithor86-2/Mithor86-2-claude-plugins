@@ -106,19 +106,17 @@ Mithor86-2-claude-plugins/
 ├── plugins/
 │   └── gitflow-es/                       ← el plugin en sí
 │       ├── .claude-plugin/plugin.json
-│       ├── rules/
-│       │   ├── git-flow.md
-│       │   └── feature-docs.md
-│       ├── skills/
-│       │   ├── git/SKILL.md
-│       │   └── commit/SKILL.md
-│       ├── agents/
-│       │   └── feature-doc-writer.md     ← subagente para generar el doc al finish
-│       ├── hooks/
-│       │   ├── hooks.json
-│       │   ├── safety-check.py           ← bloquea operaciones git peligrosas
-│       │   └── session-context.py        ← imprime estado git al iniciar sesión
+│       ├── rules/                        ← política de ramas y formato de docs
+│       ├── skills/                       ← git, commit, branch-name-suggester,
+│       │                                    worktrees, tiempos
+│       ├── agents/                       ← feature-doc, commit-message y release-notes
+│       ├── hooks/                        ← seguridad, contexto de sesión y registro
+│       │                                    de tiempos (ver árbol del plugin)
+│       ├── tests/                        ← suite pytest de los hooks y módulos
 │       └── README.md
+├── docs/
+│   ├── planes/                           ← planes de implementación por requerimiento
+│   └── <feature>/                        ← doc de cierre de cada rama
 ├── CHANGELOG.md
 ├── LICENSE
 ├── .gitignore
