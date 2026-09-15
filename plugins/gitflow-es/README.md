@@ -311,7 +311,9 @@ gitflow-es/
 ├── skills/
 │   ├── git/SKILL.md                ← skill principal de operaciones git
 │   ├── commit/SKILL.md             ← skill de Conventional Commits
-│   └── branch-name-suggester/SKILL.md  ← propone nombres de rama
+│   ├── branch-name-suggester/SKILL.md  ← propone nombres de rama
+│   ├── worktrees/SKILL.md          ← worktrees y reparto de trabajo en paralelo
+│   └── tiempos/SKILL.md            ← consulta del registro de tiempos por rama
 ├── agents/
 │   ├── feature-doc-writer.md       ← subagente: doc de la rama (en /git finish)
 │   ├── commit-message-writer.md    ← subagente: mensaje de commit (por /commit)
@@ -319,10 +321,14 @@ gitflow-es/
 ├── hooks/
 │   ├── hooks.json                  ← registra los hooks en Claude Code
 │   ├── i18n.py                     ← mensajes ES/EN + detección de idioma (módulo compartido)
-│   ├── safety-check.py             ← PreToolUse: bloquea comandos git peligrosos
+│   ├── gitwt.py                    ← worktrees, config cacheada y rutas de git (módulo compartido)
+│   ├── safety-check.py             ← PreToolUse: bloquea comandos git peligrosos y avisa de la política de worktrees
 │   ├── post-gitflow-init.py        ← PostToolUse: pide el idioma tras git flow init
-│   └── session-context.py          ← SessionStart: imprime el estado git
-├── tests/                          ← tests pytest de los hooks (safety + i18n)
+│   ├── session-context.py          ← SessionStart: estado GitFlow y configuración pendiente
+│   ├── timelog.py                  ← modelo del registro de tiempos (agregación y evidencia)
+│   ├── time-tracker.py             ← hook multi-evento que alimenta el registro
+│   └── time-report.py              ← CLI del reporte de tiempos (markdown o JSON)
+├── tests/                          ← suite pytest de hooks y módulos
 └── README.md
 ```
 
