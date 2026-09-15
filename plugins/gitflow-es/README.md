@@ -93,6 +93,26 @@ git config gitflow-es.language en
 git config --global gitflow-es.language en
 ```
 
+### Todas las claves de configuración
+
+Se configuran con `git config <clave> <valor>` (agregá `--global` para aplicarlas a
+todos tus repos). El asistente **`/git init`** las recorre una por una y las deja
+puestas en un solo paso.
+
+| Clave | Default | Qué controla |
+| --- | --- | --- |
+| `gitflow-es.language` | `es` | Idioma de todo el texto generado |
+| `gitflow-es.scopes` | — | Scopes válidos para Conventional Commits |
+| `gitflow-es.worktreeRoot` | `<padre-del-repo>/<repo>-worktrees` | Dónde se crean los worktrees |
+| `gitflow-es.timeTracking` | `on` | Registro de tiempos por rama |
+| `gitflow-es.timeNotes` | `on` | Descripción del trabajo (prompts + asuntos de commit) |
+| `gitflow-es.evidence` | `on` | Validación de tiempos muertos con `mtime` y commits |
+| `gitflow-es.idleThresholdMin` | `15` | Minutos a partir de los cuales un hueco cuenta como inactividad |
+| `gitflow-es.testPattern` | — | Regex extra para reconocer comandos de pruebas |
+
+Al abrir una sesión, el hook de contexto muestra qué falta por configurar y ofrece
+`/git init`; si ya está todo, no dice nada.
+
 Valores válidos: `es` y `en`; cualquier otro cae a español. Si abres un repo con git-flow ya inicializado y el idioma sin configurar, el plugin te lo pedirá antes de la primera acción de git. No requiere archivos de config adicionales ni permisos especiales más allá de los que Claude Code pide para ejecutar `git`.
 
 ## Uso

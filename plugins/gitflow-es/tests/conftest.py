@@ -35,3 +35,9 @@ def safety():
 @pytest.fixture(scope="session")
 def i18n():
     return _load("i18n", "i18n.py")
+
+
+@pytest.fixture
+def session_context():
+    # Sin cache entre tests: cada uno parchea sus propios globals del módulo.
+    return _load("session_context", "session-context.py")

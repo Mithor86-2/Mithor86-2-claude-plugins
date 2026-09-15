@@ -41,8 +41,9 @@ git config --get gitflow.branch.develop   # vacío / sin salida = NO inicializad
 - **Si YA está inicializado:** procede con la acción.
 - **Si NO está inicializado:** **detente y pide confirmación al usuario** para
   inicializarlo con los defaults del equipo:
-  - Si **acepta** → ejecuta `git flow init -d` y luego continúa con la acción
-    solicitada.
+  - Si **acepta** → ejecuta `/git init` (asistente completo: git-flow, idioma,
+    raíz de worktrees y registro de tiempos) o, si el usuario solo quiere lo
+    mínimo, `git flow init -d`. Luego continúa con la acción solicitada.
   - Si **rechaza** → no inicialices. Continúa con `git` estándar cuando la acción
     lo permita (`fix`/`refactor`/`chore`, commit, merge, push, tag), advirtiendo
     que los comandos `git flow` nativos (`feature`/`hotfix`/`release start/finish`)
@@ -68,6 +69,7 @@ gitflow-es esté configurado (revisa `GITFLOW_LANG` o
 ### GitFlow
 
 ```
+/git init                          → Inicializa git-flow y toda la configuración del plugin
 /git start <tipo> <descripcion>   → Inicia una rama GitFlow desde la base correcta
 /git finish                        → Cierra la rama actual fusionándola (merge local) en su destino
 /git release <version>             → Inicia un ciclo de release
@@ -93,6 +95,61 @@ gitflow-es esté configurado (revisa `GITFLOW_LANG` o
 /git undo                         → Revierte el último commit manteniendo los cambios
 /git sync                         → Sincroniza develop y main con origin
 ```
+
+---
+
+## Subcomando: init
+
+Deja el repo listo para trabajar con el plugin en un solo paso: git-flow, idioma,
+raíz de worktrees y registro de tiempos. Es lo que el hook de sesión ofrece cuando
+detecta configuración incompleta.
+
+### Flujo
+
+1. **Diagnóstico** — leer el estado actual y mostrárselo al usuario:
+
+   ```bash
+   git config --get gitflow.branch.develop    # vacío = git-flow sin inicializar
+   git config --get gitflow-es.language       # vacío = idioma sin configurar
+   git config --get gitflow-es.worktreeRoot   # vacío = se usa el default
+   git config --get gitflow-es.timeTracking   # vacío = se usa el default (on)
+   ```
+
+2. **git-flow** — si falta, pedir confirmación y ejecutar `git flow init -d`
+   (`main` producción, `develop` integración, prefijos estándar). Si el repo no
+   tiene commits, primero guiar al commit inicial.
+3. **Idioma** — preguntar `es` / `en` y guardar:
+   `git config gitflow-es.language <lang>`.
+4. **Raíz de worktrees** — proponer el default (`<padre-del-repo>/<repo>-worktrees`)
+   y confirmarlo. Si el usuario elige otra ruta, guardarla con
+   `git config gitflow-es.worktreeRoot <ruta>`; **si esa ruta queda dentro del
+   repo, agregarla a `.gitignore`** en el mismo paso.
+5. **Registro de tiempos** — preguntar si lo quiere activo (default sí) y guardar
+   `git config gitflow-es.timeTracking on|off`. Mencionar que las notas de trabajo
+   (`gitflow-es.timeNotes`) y la validación por evidencia (`gitflow-es.evidence`)
+   se pueden apagar por separado, y que el registro es **local**: vive dentro de
+   `.git/` y nunca se commitea.
+6. **Scopes de commit (opcional)** — proponer scopes a partir de la estructura real
+   del repo y, si el usuario acepta, guardarlos:
+   `git config gitflow-es.scopes "auth,api,ui,deps"`.
+7. **Resumen** — mostrar la tabla final de configuración y el siguiente paso
+   sugerido (`/git start <tipo> <descripcion>`).
+
+### Claves de configuración
+
+| Clave | Default | Qué controla |
+| --- | --- | --- |
+| `gitflow-es.language` | `es` | Idioma de todo el texto generado |
+| `gitflow-es.scopes` | — | Lista de scopes válidos para Conventional Commits |
+| `gitflow-es.worktreeRoot` | `<padre-del-repo>/<repo>-worktrees` | Dónde se crean los worktrees |
+| `gitflow-es.timeTracking` | `on` | Registro de tiempos por rama |
+| `gitflow-es.timeNotes` | `on` | Descripción del trabajo (prompts + asuntos de commit) |
+| `gitflow-es.evidence` | `on` | Validación de tiempos muertos por `mtime` y commits |
+| `gitflow-es.idleThresholdMin` | `15` | Minutos a partir de los cuales un hueco es inactividad |
+| `gitflow-es.testPattern` | — | Regex extra para reconocer comandos de pruebas |
+
+> Todas son de repo. Para aplicarlas a todos los repos del usuario, agregar
+> `--global` (p. ej. `git config --global gitflow-es.language en`).
 
 ---
 
