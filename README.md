@@ -4,6 +4,8 @@ Marketplace personal de plugins de Claude Code. Por ahora contiene un plugin:
 
 - **[gitflow-es](./plugins/gitflow-es/README.md)** — Skills, subagentes y hooks de Git Flow con idioma configurable ES/EN (`git`, `commit`, `branch-name-suggester`, `worktrees`, `tiempos`): worktrees obligatorios desde `develop`, trabajo en paralelo y registro de tiempos por rama.
 
+El [ROADMAP](./ROADMAP.md) lista las features candidatas para próximas versiones, con diseño técnico y casos borde de cada una.
+
 ## Instalación
 
 ### 1. Requisitos previos
@@ -118,6 +120,7 @@ Mithor86-2-claude-plugins/
 │   ├── planes/                           ← planes de implementación por requerimiento
 │   └── <feature>/                        ← doc de cierre de cada rama
 ├── CHANGELOG.md
+├── ROADMAP.md                            ← catálogo de features candidatas
 ├── LICENSE
 ├── .gitignore
 └── README.md
