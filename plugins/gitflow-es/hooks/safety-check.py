@@ -28,6 +28,15 @@ Reglas aplicadas:
    10. git add/commit que incluya archivos .env o de credenciales
    11. git flow <feature|hotfix|release|support|bugfix> <sub> en un repo
        que no tiene git-flow inicializado (falta `git flow init`)
+   12. git flow <tipo> finish ejecutado *dentro* del worktree de la rama:
+       git-flow no puede hacer checkout de develop ahí, no mergea nada, no
+       borra la rama y aun así reporta éxito con código 0
+
+Además emite **avisos** no bloqueantes (additionalContext) cuando la política
+de worktrees no se está siguiendo: crear una rama sin worktree, crear un
+worktree desde una base que no es develop, hacer finish con el worktree de la
+rama todavía vivo, o editar archivos en el worktree de control. Los avisos
+informan; no detienen nada (`gitflow-es.worktrees off` los apaga).
 
   Para Write/Edit/MultiEdit/NotebookEdit:
    12. Cualquier edición de archivo cuando la rama del repo que contiene el
@@ -57,6 +66,13 @@ try:
     import i18n as _i18n
 except Exception:  # pragma: no cover - ruta de degradación
     _i18n = None
+
+# Helpers de worktrees/config compartidos. Si faltaran, las guardas de worktree
+# se desactivan solas y el resto del hook sigue funcionando igual.
+try:
+    import gitwt as _gitwt
+except Exception:  # pragma: no cover - ruta de degradación
+    _gitwt = None
 
 EDIT_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 PROTECTED_BRANCHES = {"main", "master"}
@@ -92,9 +108,53 @@ def block(reason: str, hint: str = "") -> None:
     sys.exit(2)
 
 
+# Avisos acumulados durante los checks; se emiten al permitir la acción.
+_ADVICES: list = []
+
+
+def advise(message: str) -> None:
+    """Registra un aviso no bloqueante (se emite en `allow`)."""
+    if message and message not in _ADVICES:
+        _ADVICES.append(message)
+
+
 def allow() -> None:
-    """Permite la acción."""
+    """
+    Permite la acción. Si hay avisos acumulados, los entrega como
+    `additionalContext` para que Claude los vea sin que nada se bloquee.
+    """
+    if _ADVICES:
+        payload = {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "additionalContext": "\n\n".join(_ADVICES),
+            }
+        }
+        print(json.dumps(payload, ensure_ascii=False))
     sys.exit(0)
+
+
+def worktree_policy_enabled(cwd: Optional[str] = None) -> bool:
+    """La política de worktrees se puede apagar con `gitflow-es.worktrees off`."""
+    if _gitwt is None:
+        return False
+    try:
+        return _gitwt.flag_enabled("worktrees", default=True, cwd=cwd)
+    except Exception:
+        return False
+
+
+def split_commands(command: str) -> list:
+    """
+    Parte una línea compuesta en los comandos que la forman (`&&`, `||`, `;`,
+    `|`, saltos de línea).
+
+    Cada check se evalúa sobre un solo comando y no sobre todo el string: sin
+    esto, un `git merge --no-ff x` y un `git push origin develop` en la misma
+    línea se leían como un force-push a develop.
+    """
+    parts = re.split(r"(?:&&|\|\||;|\||\n)", command)
+    return [part.strip() for part in parts if part.strip()]
 
 
 def current_branch(cwd: Optional[str] = None) -> Optional[str]:
@@ -191,8 +251,11 @@ def check_force_push(command: str, branch: Optional[str]) -> None:
     # cualquier cluster de flags cortos que contenga `f` en cualquier posición
     # (`-f`, `-fv`, `-vf`, `-fu`). El negative lookbehind `(?<!-)` evita matchear
     # el segundo guion de un flag largo no relacionado (p. ej. `--follow-tags`).
+    # El lookbehind excluye `-` y cualquier carácter de palabra, para que el `-ff`
+    # interno de `--no-ff` (o el `-f` de `--follow-tags`) no cuente como force:
+    # solo matchea un cluster de flags cortos que arranque token.
     has_force = re.search(
-        r"(?:(?<![-\w])--force(?:-with-lease)?\b|(?<!-)-[a-zA-Z]*f[a-zA-Z]*\b)",
+        r"(?:(?<![-\w])--force(?:-with-lease)?\b|(?<![-\w])-[a-zA-Z]*f[a-zA-Z]*\b)",
         command,
     )
     if not has_force:
@@ -344,6 +407,126 @@ def check_gitflow_not_initialized(command: str, _branch: Optional[str]) -> None:
     )
 
 
+FLOW_FINISH_RE = re.compile(
+    r"\bgit\s+flow\s+(feature|hotfix|release|support|bugfix)\s+finish\b(?:\s+(?P<name>[^\s;&|]+))?"
+)
+BRANCH_CREATE_RE = re.compile(
+    r"\bgit\s+(?:checkout\s+-b|switch\s+-c)\b"
+    r"|\bgit\s+flow\s+(?:feature|release|hotfix|bugfix|support)\s+start\b"
+)
+WORKTREE_ADD_RE = re.compile(r"\bgit\s+worktree\s+add\b(?P<args>[^;&|]*)")
+
+
+def check_finish_in_linked_worktree(command: str, _branch: Optional[str]) -> None:
+    """
+    Bloquea `git flow <tipo> finish` cuando se ejecuta dentro del worktree de la
+    propia rama.
+
+    git-flow intenta `git checkout develop`, que falla porque esa rama está
+    ocupada por el worktree de control; pese a ello **no aborta**: no mergea, no
+    borra la rama, imprime "Summary of actions" y sale con código 0. Es el peor
+    modo de fallo posible (creer que cerraste sin haber cerrado), así que este
+    caso sí se bloquea aunque el resto de la política de worktrees solo avise.
+    """
+    match = FLOW_FINISH_RE.search(command)
+    if not match or _gitwt is None:
+        return
+    if not _gitwt.is_linked_worktree():
+        return
+
+    subcommand = match.group(1)
+    develop = _gitwt.develop_branch()
+    block(
+        _t("finish_in_linked_worktree", subcommand=subcommand, develop=develop),
+        hint=_t("finish_in_linked_worktree_hint", subcommand=subcommand, develop=develop),
+    )
+
+
+def check_finish_with_live_worktree(command: str, branch: Optional[str]) -> None:
+    """
+    Avisa cuando se hace finish desde el worktree de control pero la rama a
+    cerrar todavía tiene su worktree vivo: git-flow mergea, falla al borrar la
+    rama y reporta éxito igual.
+    """
+    match = FLOW_FINISH_RE.search(command)
+    if not match or _gitwt is None or not worktree_policy_enabled():
+        return
+
+    name = match.group("name")
+    if name:
+        target = "{0}{1}".format(_gitwt.gitflow_prefix(match.group(1)), name)
+    else:
+        target = branch or ""
+
+    path = _gitwt.worktree_for_branch(target)
+    if path and _gitwt.is_linked_worktree(path):
+        advise(_t("wt_advice_finish_worktree_alive", branch=target, path=path))
+
+
+def check_branch_creation_without_worktree(command: str, _branch: Optional[str]) -> None:
+    """
+    Avisa cuando se crea una rama sin worktree (`git checkout -b`, `git switch -c`
+    o `git flow <tipo> start`). La política del equipo es una rama, un worktree,
+    creado desde `develop`.
+    """
+    if not BRANCH_CREATE_RE.search(command) or not worktree_policy_enabled():
+        return
+    if WORKTREE_ADD_RE.search(command):
+        return  # El mismo comando ya crea el worktree.
+    advise(_t("wt_advice_no_worktree"))
+
+
+def _parse_worktree_add(args: str):
+    """
+    Devuelve (rama_nueva, base) de un `git worktree add`. Ambos pueden ser None.
+    Parseo deliberadamente simple: esto alimenta un aviso, no una decisión de
+    seguridad.
+    """
+    tokens = args.split()
+    new_branch = None
+    positionals = []
+    skip_next = False
+    for index, token in enumerate(tokens):
+        if skip_next:
+            skip_next = False
+            continue
+        if token in ("-b", "-B", "--track", "--reason", "--orphan"):
+            if token in ("-b", "-B") and index + 1 < len(tokens):
+                new_branch = tokens[index + 1]
+            skip_next = True
+            continue
+        if token.startswith("-"):
+            continue
+        positionals.append(token)
+    base = positionals[1] if len(positionals) > 1 else None
+    return new_branch, base
+
+
+def check_worktree_base(command: str, _branch: Optional[str]) -> None:
+    """
+    Avisa cuando un worktree se crea desde una base que no es `develop`. La
+    excepción estructural es `hotfix/`, que por GitFlow parte de producción.
+    """
+    match = WORKTREE_ADD_RE.search(command)
+    if not match or _gitwt is None or not worktree_policy_enabled():
+        return
+
+    new_branch, base = _parse_worktree_add(match.group("args"))
+    if not base:
+        return
+
+    develop = _gitwt.develop_branch()
+    production = _gitwt.production_branch()
+    short_base = base.split("/")[-1]
+
+    if short_base == develop:
+        return
+    if new_branch and new_branch.startswith("hotfix/") and short_base in (production, "master"):
+        return
+
+    advise(_t("wt_advice_base_not_develop", base=base))
+
+
 BASH_CHECKS = [
     check_force_push,
     check_commit_on_main,
@@ -356,6 +539,10 @@ BASH_CHECKS = [
     check_push_delete_protected,
     check_sensitive_files,
     check_gitflow_not_initialized,
+    check_finish_in_linked_worktree,
+    check_finish_with_live_worktree,
+    check_branch_creation_without_worktree,
+    check_worktree_base,
 ]
 
 
@@ -405,6 +592,34 @@ def check_edit_on_main(file_path: str) -> None:
     )
 
 
+def check_edit_on_control_worktree(file_path: str) -> None:
+    """
+    Avisa (no bloquea) cuando se editan archivos en el worktree de control
+    estando en `develop`. La excepción de "commit directo en develop" sigue
+    siendo válida, por eso es aviso y no bloqueo; se limita a uno por hora para
+    no repetirlo en cada edición.
+    """
+    if _gitwt is None or not worktree_policy_enabled():
+        return
+
+    branch = branch_of_file(file_path)
+    if branch is None or branch != _gitwt.develop_branch():
+        return
+
+    try:
+        resolved = Path(file_path).expanduser().resolve()
+        cwd = str(resolved if resolved.is_dir() else resolved.parent)
+    except (OSError, RuntimeError):
+        cwd = None
+
+    if _gitwt.is_linked_worktree(cwd):
+        return
+    if not _gitwt.throttle("edit-on-control", 3600, cwd=cwd):
+        return
+
+    advise(_t("wt_advice_edit_on_control", branch=branch))
+
+
 # --------------------------------------------------------------------------- #
 # Main
 # --------------------------------------------------------------------------- #
@@ -432,13 +647,14 @@ def main() -> None:
         if not command.strip():
             allow()
         branch = current_branch()
-        for check in BASH_CHECKS:
-            try:
-                check(command, branch)
-            except SystemExit:
-                raise
-            except Exception:
-                continue
+        for segment in split_commands(command):
+            for check in BASH_CHECKS:
+                try:
+                    check(segment, branch)
+                except SystemExit:
+                    raise
+                except Exception:
+                    continue
         allow()
 
     # Ruta 2: modificación de archivos
@@ -446,12 +662,13 @@ def main() -> None:
         file_path = extract_edit_target(tool_name, tool_input)
         if not file_path:
             allow()
-        try:
-            check_edit_on_main(file_path)
-        except SystemExit:
-            raise
-        except Exception:
-            pass
+        for edit_check in (check_edit_on_main, check_edit_on_control_worktree):
+            try:
+                edit_check(file_path)
+            except SystemExit:
+                raise
+            except Exception:
+                continue
         allow()
 
     # Cualquier otra tool — no aplica

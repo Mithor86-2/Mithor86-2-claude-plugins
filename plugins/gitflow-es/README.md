@@ -171,6 +171,53 @@ necesito un hotfix para el crash al pagar
 
 Parte desde `main`, crea `hotfix/<descripcion>` y avisa que el cierre va a `main` **y** a `develop`.
 
+## Worktrees
+
+Cada rama de trabajo vive en **su propio worktree**, creado desde `develop`
+actualizado. El repo principal queda como **worktree de control**: parado en
+`develop`, sin editar archivos ahí, y es el único lugar donde se cierran ramas.
+
+```text
+mi-repo/                         ← worktree de control (develop)
+mi-repo-worktrees/
+├── feature-login-con-google/    ← una rama, un worktree
+├── fix-timeout-api/
+└── chore-actualizar-deps/
+```
+
+`/git start` hace todo el ciclo: actualiza la base en el control, crea rama y
+worktree en un comando, y te deja trabajando dentro. `/git finish` lo cierra en
+el orden correcto y **verifica** que haya cerrado de verdad.
+
+### Por qué el cierre tiene un orden obligatorio
+
+`git-flow-avh` reporta éxito aunque no haya cerrado nada:
+
+| Escenario | Efecto real | Lo que reporta |
+| --- | --- | --- |
+| `finish` dentro del worktree de la rama | No mergea ni borra la rama | "Summary of actions… merged… removed", exit 0 |
+| `finish` con el worktree de la rama vivo | Mergea, no borra la rama | Lo mismo, exit 0 |
+| `worktree remove` y luego `finish` desde el control | Correcto | Correcto |
+
+Por eso el hook **bloquea** el primer caso, **avisa** en el segundo y `/git finish`
+comprueba las postcondiciones (`git branch --list` vacío y commits realmente en
+`develop`) en vez de confiar en el código de salida.
+
+### Reglas y excepciones
+
+- **Base:** `develop` para todo, salvo `hotfix/`, que parte de `main` por GitFlow.
+- **Creación:** `git worktree add -b`; `git checkout -b` y `git switch -c` quedan fuera.
+- **Excepción:** si pedís explícitamente trabajar sin worktree o desde otra base, se respeta.
+- **`git stash` entre worktrees:** el working tree es de cada uno, pero `refs/stash`
+  es global al repo — guardá y restaurá siempre en el mismo worktree.
+- Los avisos se apagan con `git config gitflow-es.worktrees off`.
+
+### Trabajo en paralelo
+
+Varias tareas independientes = varios worktrees desde `develop`, todos a la vez.
+El skill `worktrees` reparte el lote, actualiza la base una sola vez y cierra las
+ramas **de a una** (los merges nunca van en paralelo).
+
 ## Estructura del proyecto
 
 ```text

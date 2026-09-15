@@ -158,12 +158,12 @@ El registro no guarda solo duraciones: cada rama y cada ventana de trabajo lleva
 ### Fase 2 — Worktrees obligatorios desde develop (Ajuste 2)
 | # | Tarea | Estado |
 |---|-------|--------|
-| 2.1 | `rules/git-flow.md`: sección "Worktrees (obligatorio)" + resolución explícita de C1-C6, C9, C10 | ⬜ Pendiente |
-| 2.2 | `skills/git/SKILL.md`: `start` y `finish` en modo worktree (con verificación de postcondiciones y **escaneo de evidencia de tiempos antes de remover el worktree**), `sync` sin checkouts, subcomando `/git worktree` | ⬜ Pendiente |
-| 2.3 | `safety-check.py`: bloqueo de `git flow <tipo> finish` en worktree linked + avisos de worktree (rama sin worktree, base distinta de `develop`, edición en el control) | ⬜ Pendiente |
-| 2.4 | Claves i18n ES/EN del bloqueo y los avisos | ⬜ Pendiente |
-| 2.5 | Tests: bloqueo del finish en worktree linked, avisos que sí/no disparan, silencio en `git worktree add` | ⬜ Pendiente |
-| 2.6 | Docs: README del plugin — sección Worktrees, con la tabla del falso éxito de git-flow | ⬜ Pendiente |
+| 2.1 | `rules/git-flow.md`: sección "Worktrees (obligatorio)" + resolución explícita de C1-C6, C9, C10 | ✅ Finalizada |
+| 2.2 | `skills/git/SKILL.md`: `start` y `finish` en modo worktree (con verificación de postcondiciones y **escaneo de evidencia de tiempos antes de remover el worktree**), `sync` sin checkouts, subcomando `/git worktree` | ✅ Finalizada |
+| 2.3 | `safety-check.py`: bloqueo de `git flow <tipo> finish` en worktree linked + avisos de worktree (rama sin worktree, base distinta de `develop`, edición en el control) | ✅ Finalizada |
+| 2.4 | Claves i18n ES/EN del bloqueo y los avisos | ✅ Finalizada |
+| 2.5 | Tests: bloqueo del finish en worktree linked, avisos que sí/no disparan, silencio en `git worktree add` | ✅ Finalizada |
+| 2.6 | Docs: README del plugin — sección Worktrees, con la tabla del falso éxito de git-flow | ✅ Finalizada |
 
 ### Fase 3 — Trabajo en paralelo con worktrees (Ajuste 3)
 | # | Tarea | Estado |
@@ -197,6 +197,7 @@ El registro no guarda solo duraciones: cada rama y cada ventana de trabajo lleva
 
 ## Bitácora
 
+- 2026-09-15 — Fase 2 finalizada: política de worktrees en la rule y el skill `git`, módulo compartido `gitwt.py`, bloqueo del finish en worktree linked, cuatro avisos no bloqueantes y subcomando `/git worktree`. **Bug encontrado de paso:** `check_force_push` leía todo el comando compuesto y tomaba el `-ff` de `--no-ff` como flag de force — bloqueaba flujos legítimos del propio plugin. Corregido con segmentación por comando y lookbehind más estricto, con tests de regresión. Suite: 103 tests en verde.
 - 2026-09-15 — Fase 1 finalizada: `session-context.py` reporta worktrees y checklist de configuración, `/git init` documentado en el skill `git`, 85 claves i18n en ES/EN y `test_session_context.py` (8 tests). Suite: 74 tests en verde.
 - 2026-09-14 — `git flow init -d` ejecutado (`main` producción, `develop` integración), `gitflow-es.language=es`, worktree de la feature creado desde `develop`. Plan creado.
 - 2026-09-15 — Los tiempos muertos se validan contra evidencia real (`mtime` de archivos modificados + timestamps de commits); aparece el rubro `trabajo_externo` y la evidencia se captura antes de remover el worktree en el finish.

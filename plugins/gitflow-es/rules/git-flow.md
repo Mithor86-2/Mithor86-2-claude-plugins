@@ -32,6 +32,69 @@ hotfix/<descripcion-corta-en-kebab-case>
 release/<version>
 ```
 
+## Worktrees (obligatorio)
+
+Toda rama de trabajo vive en **su propio worktree**, creado desde `develop`
+actualizado. El worktree principal del repo queda como **worktree de control**:
+parado en `develop`, sin editar archivos ahí, y es el único lugar donde se hacen
+los cierres (`finish`), los merges y los `sync`.
+
+| Concepto | Regla |
+|----------|-------|
+| Ubicación | `<padre-del-repo>/<repo>-worktrees/<tipo>-<slug>/` (configurable con `git config gitflow-es.worktreeRoot`) |
+| Base | `develop` para `feature`, `fix`, `refactor`, `chore` y `release`; `main` solo para `hotfix` (excepción estructural de GitFlow) |
+| Creación | `git worktree add -b <tipo>/<slug> <ruta> <base>` — un solo comando crea rama y worktree |
+| Cierre | Desde el worktree de control y **después** de `git worktree remove <ruta>` |
+| Excepción | Si el usuario pide explícitamente trabajar sin worktree ("sin worktree", "en el repo principal") o desde otra base ("desde main", "desde `<rama>`"), se respeta y se deja constancia |
+
+### Ciclo completo
+
+```bash
+# 1. Actualizar la base SIEMPRE en el worktree de control
+#    (no se puede hacer pull de una rama ocupada por otro worktree)
+git -C <control> pull --ff-only origin develop
+
+# 2. Crear rama + worktree en un solo paso
+git worktree add -b feature/<slug> "<worktreeRoot>/feature-<slug>" develop
+
+# 3. Trabajar dentro del worktree: ediciones y commits normales
+
+# 4. Cerrar: volver al control, remover el worktree y recién entonces finish
+cd <control>
+git worktree remove "<worktreeRoot>/feature-<slug>"
+git flow feature finish <slug>
+
+# 5. Verificar que el cierre fue real (ver abajo por qué)
+git branch --list feature/<slug>             # debe salir vacío
+git merge-base --is-ancestor <sha> develop   # debe salir 0
+```
+
+### Por qué el cierre se hace exactamente así
+
+`git-flow-avh` **reporta éxito aunque no haya cerrado nada**:
+
+| Escenario | Efecto real | Lo que reporta |
+|-----------|-------------|----------------|
+| `finish` dentro del worktree de la rama | No mergea nada y no borra la rama | "Summary of actions… merged… removed", **exit 0** |
+| `finish` desde el control con el worktree vivo | Mergea, pero no borra la rama | Lo mismo, **exit 0** |
+| `worktree remove` y luego `finish` desde el control | Correcto | Correcto |
+
+Por eso el hook `safety-check` **bloquea** el primer caso, **avisa** en el segundo,
+y `/git finish` **verifica las postcondiciones** en lugar de confiar en el código
+de salida.
+
+### Consecuencias operativas
+
+- **Una rama ocupada por un worktree no se puede hacer `checkout` ni `pull` desde
+  otro.** Actualizar `develop` y `main` es siempre tarea del worktree de control.
+- **`git stash` engaña entre worktrees:** el working tree es propio de cada uno,
+  pero `refs/stash` es **global al repo**. Un `stash pop` desde otro worktree
+  aplica cambios de otra rama. Guardá y restaurá siempre en el mismo worktree.
+- **`git worktree prune`** limpia los registros de worktrees borrados a mano.
+- Los avisos de esta política se apagan con `git config gitflow-es.worktrees off`.
+
+---
+
 ## Convención de commits (Conventional Commits)
 
 Descripción en **español**, imperativo, sin mayúscula inicial, sin punto final. Máximo 72 caracteres en la primera línea.
@@ -85,14 +148,15 @@ el scope o usa el más cercano y deja una nota.
 
 1. Verificar la rama activa con `/git status`
 2. **Nunca** modificar archivos directamente sobre `main` o `develop`
-3. **Actualizar la rama base antes de crear cualquier rama** — siempre, incluso con git-flow nativo:
+3. **Actualizar la rama base antes de crear cualquier rama** — siempre, y desde el
+   **worktree de control** (una rama ocupada por otro worktree no acepta `pull`):
    ```bash
-   git pull origin develop   # para feature, fix, refactor, chore
-   git pull origin main      # para hotfix
+   git -C <control> pull --ff-only origin develop   # feature, fix, refactor, chore, release
+   git -C <control> pull --ff-only origin main      # hotfix
    ```
 4. **Preguntar el tipo de cambio** — solo si el usuario NO lo indicó ya en su mensaje
 5. **Proponer el nombre de la rama** y confirmar con el usuario
-6. **Crear la rama** solo después de confirmación — usando el comando git-flow correspondiente
+6. **Crear la rama y su worktree** solo después de confirmación — `git worktree add -b <tipo>/<slug> <ruta> <base>` (modo worktree, default) o el comando git-flow correspondiente si el usuario pidió trabajar sin worktree
 7. Realizar los cambios en archivos
 8. Proponer mensaje de commit siguiendo Conventional Commits y pedir confirmación
 9. _(Opcional)_ Si el proyecto cuenta con un comando o script de pruebas, puedes sugerirle al usuario ejecutarlo antes del finish. Si el proyecto no tiene pruebas automatizadas o el usuario prefiere omitirlas, continuar al siguiente paso sin bloquear.
@@ -111,8 +175,9 @@ Si un `finish` falla por conflictos de merge:
 > Claude **nunca debe modificar archivos** sin haber definido y confirmado la rama de trabajo.
 > Claude **nunca debe commitear directamente** en `main`. En `develop` solo si el usuario lo solicita **explícitamente** (ver excepción abajo).
 > Claude **debe crear la rama git al inicio de cada fase** — antes de tocar cualquier archivo.
-> Claude **debe usar comandos git-flow** para tipos soportados — nunca `git checkout -b` ni merge manual cuando hay equivalente git-flow.
-> Claude **siempre debe hacer pull de la rama base** antes de crear cualquier rama nueva, incluso con git-flow nativo.
+> Claude **crea las ramas con `git worktree add -b`** (modo worktree) o con `git flow <tipo> start` (modo sin worktree, solo si el usuario lo pidió). `git checkout -b` y `git switch -c` quedan prohibidos en ambos modos.
+> Claude **debe cerrar con comandos git-flow** para los tipos soportados — nunca merge manual cuando hay equivalente git-flow — y **verificar el resultado**, porque `git flow finish` reporta éxito aunque no haya mergeado.
+> Claude **siempre debe actualizar la rama base desde el worktree de control** antes de crear cualquier rama nueva, incluso con git-flow nativo.
 
 ### Excepción — Commit directo en `develop`
 
@@ -136,39 +201,47 @@ El usuario puede solicitar commits directos en `develop` saltándose el flujo de
 
 ### Tipos con soporte nativo git-flow
 
+La **creación** usa worktrees; el **cierre** usa el comando git-flow desde el
+worktree de control, con el worktree de la rama ya removido.
+
 ```bash
 # feature
-git pull origin develop
-git flow feature start <nombre>
-git flow feature finish <nombre>
+git -C <control> pull --ff-only origin develop
+git worktree add -b feature/<nombre> "<worktreeRoot>/feature-<nombre>" develop
+# finish (desde <control>):
+git worktree remove "<worktreeRoot>/feature-<nombre>" && git flow feature finish <nombre>
 
-# hotfix
-git pull origin main
-git flow hotfix start <nombre>
-git flow hotfix finish <nombre>
+# hotfix (única excepción de base: parte de main)
+git -C <control> pull --ff-only origin main
+git worktree add -b hotfix/<nombre> "<worktreeRoot>/hotfix-<nombre>" main
+# finish (desde <control>):
+git worktree remove "<worktreeRoot>/hotfix-<nombre>" && git flow hotfix finish <nombre>
 
 # release
-git pull origin develop
-git flow release start <version>
-git flow release finish <version>
+git -C <control> pull --ff-only origin develop
+git worktree add -b release/<version> "<worktreeRoot>/release-<version>" develop
+# finish (desde <control>):
+git worktree remove "<worktreeRoot>/release-<version>" && git flow release finish <version>
 ```
 
 ### Tipos sin soporte nativo git-flow
 
 ```bash
-# fix
-git checkout develop && git pull origin develop
-git checkout -b fix/<nombre>
-# finish:
-git checkout develop && git merge --no-ff fix/<nombre> && git branch -d fix/<nombre>
+# fix, refactor, chore — idéntico patrón
+git -C <control> pull --ff-only origin develop
+git worktree add -b fix/<nombre> "<worktreeRoot>/fix-<nombre>" develop
+# finish (desde <control>, con el worktree ya removido):
+git worktree remove "<worktreeRoot>/fix-<nombre>"
+git merge --no-ff fix/<nombre> && git branch -d fix/<nombre>
+```
 
-# refactor
-git checkout develop && git pull origin develop
-git checkout -b refactor/<nombre>
-# finish: igual que fix
+> En el worktree de control ya estamos parados en `develop`, así que el `finish`
+> manual **no lleva `git checkout develop`**: ese checkout fallaría si `develop`
+> estuviera ocupado por otro worktree.
 
-# chore
-git checkout develop && git pull origin develop
-git checkout -b chore/<nombre>
-# finish: igual que fix
+### Modo sin worktree (solo si el usuario lo pide)
+
+```bash
+git flow feature start <nombre>     # crea y hace checkout en el worktree actual
+git flow feature finish <nombre>    # verificar postcondiciones igual
 ```
