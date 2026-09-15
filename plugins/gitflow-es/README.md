@@ -13,6 +13,7 @@ Plugin de **Git Flow para Claude Code** con idioma configurable (Español / Engl
 - **Skill `git`** — ciclo de vida completo de ramas: `start`, `finish`, `release`, `hotfix`, `status` y operaciones básicas (add, push, pull, log, diff, stash, branch, checkout, merge, tag, undo, sync).
 - **Skill `commit`** — genera y aplica commits siguiendo Conventional Commits, analizando el diff staged real.
 - **Skill `branch-name-suggester`** — propone 2-3 nombres de rama en kebab-case con el prefijo GitFlow correcto.
+- **Skill `worktrees`** — una rama, un worktree: crea, lista y limpia worktrees, y reparte tareas independientes en paralelo desde `develop`.
 - **3 subagentes** (contexto aislado): `feature-doc-writer` (doc de la rama al cerrarla), `commit-message-writer` (mensaje de commit desde el diff) y `release-notes-writer` (CHANGELOG agrupado por tipo Conventional).
 - **3 hooks mecánicos**: `PreToolUse` (bloquea operaciones git peligrosas), `PostToolUse` (pide el idioma tras `git flow init`) y `SessionStart` (imprime el estado GitFlow al abrir el repo).
 - **Idioma ES/EN configurable** — todo el texto generado (prosa, mensajes de commit, nombres de rama) sale en el idioma elegido.
@@ -252,6 +253,7 @@ gitflow-es/
 | `git` | Ciclo de vida de ramas y commits GitFlow (start/finish/release/hotfix/status) + operaciones básicas. | Menciones de ramas, PRs, merges, releases, hotfixes, push, pull, stash, tags… aunque no se diga "gitflow". |
 | `commit` | Genera y aplica un commit Conventional analizando el diff staged. | "haz commit", "guarda los cambios", "registra esto", o cuando `git` delega el mensaje. |
 | `branch-name-suggester` | Propone 2-3 nombres de rama en kebab-case con prefijo GitFlow. | Al ir a crear una rama cuando el nombre no está definido, o desde `/git start`. |
+| `worktrees` | Gestiona worktrees (una rama, un worktree desde `develop`) y reparte tareas independientes en paralelo. | Menciones de worktrees, "varias tareas a la vez", paralelizar, o un trabajo descomponible en partes independientes. |
 
 Subagentes (se invocan automáticamente desde los skills, no por el usuario): **`feature-doc-writer`** (en `/git finish`), **`commit-message-writer`** (por `/commit`), **`release-notes-writer`** (en `/git release`).
 

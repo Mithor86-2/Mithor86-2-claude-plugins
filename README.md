@@ -2,7 +2,7 @@
 
 Marketplace personal de plugins de Claude Code. Por ahora contiene un plugin:
 
-- **[gitflow-es](./plugins/gitflow-es/README.md)** — Skills, subagentes y hooks de Git Flow con idioma configurable ES/EN (`git`, `commit`, `branch-name-suggester`).
+- **[gitflow-es](./plugins/gitflow-es/README.md)** — Skills, subagentes y hooks de Git Flow con idioma configurable ES/EN (`git`, `commit`, `branch-name-suggester`, `worktrees`, `tiempos`): worktrees obligatorios desde `develop`, trabajo en paralelo y registro de tiempos por rama.
 
 ## Instalación
 

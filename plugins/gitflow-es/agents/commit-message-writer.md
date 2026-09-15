@@ -1,6 +1,6 @@
 ---
 name: commit-message-writer
-description: Genera el mensaje de Conventional Commits leyendo únicamente `git diff --staged`, en un contexto aislado. Úsalo cuando el skill `commit` llegue a su paso de redactar el mensaje. No hace el commit ni stagea — solo devuelve el mensaje propuesto. Respeta el idioma configurado y las reglas de `../../rules/git-flow.md`.
+description: Genera el mensaje de Conventional Commits leyendo únicamente `git diff --staged`, en un contexto aislado. Úsalo cuando el skill `commit` llegue a su paso de redactar el mensaje. No hace el commit ni stagea — solo devuelve el mensaje propuesto. Respeta el idioma configurado y las reglas de `../rules/git-flow.md`.
 tools: Bash
 ---
 
@@ -39,7 +39,7 @@ Valores válidos: `es` y `en`; cualquier otro se trata como `es`. Los **tipos**
    de scopes válidos (`git config --get gitflow-es.scopes`, separados por comas),
    úsala como referencia; si no, infiere el scope de la estructura de rutas
    (p. ej. `src/auth/**` → `auth`). Si ninguno encaja, omite el scope o usa el más
-   cercano y deja una nota. Ver `../../rules/git-flow.md`.
+   cercano y deja una nota. Ver `../rules/git-flow.md`.
 5. **Redactar el asunto**: imperativo, sin mayúscula inicial, sin punto final,
    **≤72 caracteres** (re-recorta DESPUÉS de traducir si hiciera falta). Cuerpo
    opcional solo si el diff es complejo, explicando el "por qué".

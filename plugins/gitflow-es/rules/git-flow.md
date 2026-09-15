@@ -95,6 +95,42 @@ de salida.
 
 ---
 
+## Trabajo en paralelo
+
+Cuando un trabajo se descompone en tareas **independientes**, se avanzan a la vez:
+una rama y un worktree por tarea, todas creadas del mismo `develop`.
+
+### Criterio de independencia
+
+Dos tareas son independientes si **no modifican los mismos archivos**. Si los
+comparten, hay tres salidas, en orden de preferencia:
+
+1. Agruparlas en **una sola rama**.
+2. Asignarle el archivo compartido a **una** rama; las demás no lo tocan.
+3. Serializar: primero la que toca el archivo compartido, después las otras.
+
+> Archivos que casi siempre son compartidos y conviene reservar a una sola rama:
+> `CHANGELOG.md`, archivos de versión, traducciones, barrels de exportación y
+> configuración de rutas.
+
+### Reglas
+
+1. **La base se actualiza una sola vez** antes de crear el lote completo, no una
+   vez por rama.
+2. **Un worktree, un ejecutor.** Nunca dos agentes o sesiones escribiendo en el
+   mismo worktree.
+3. **Se paraleliza la implementación y las pruebas; nunca los cierres.** Merges,
+   `finish`, tags y publicaciones van de a uno y con confirmación explícita del
+   usuario — cada cierre cambia `develop` y el siguiente debe partir de esa versión.
+4. **Después de cada cierre**, las ramas del lote que siguen vivas se actualizan
+   con el nuevo `develop` (`git -C <worktree> merge develop`) antes de cerrarse.
+   Así los conflictos aparecen temprano y en el worktree correcto.
+5. **Orden de cierre:** primero la rama que toca los archivos más compartidos.
+6. Cada rama acumula su **propio registro de tiempos**; al reportar el lote, la
+   suma por rama es mayor que el reloj real — para eso está el tiempo de calendario.
+
+---
+
 ## Convención de commits (Conventional Commits)
 
 Descripción en **español**, imperativo, sin mayúscula inicial, sin punto final. Máximo 72 caracteres en la primera línea.

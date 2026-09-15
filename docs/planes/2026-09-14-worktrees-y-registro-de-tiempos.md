@@ -168,10 +168,10 @@ El registro no guarda solo duraciones: cada rama y cada ventana de trabajo lleva
 ### Fase 3 — Trabajo en paralelo con worktrees (Ajuste 3)
 | # | Tarea | Estado |
 |---|-------|--------|
-| 3.1 | Skill nuevo `skills/worktrees/SKILL.md`: crear/listar/limpiar y orquestar N tareas desde `develop` (base actualizada una sola vez, cierre secuencial) | ⬜ Pendiente |
-| 3.2 | `rules/git-flow.md`: sección "Trabajo en paralelo" — criterio de independencia, un worktree por rama, orden de cierre, refresco desde `develop` entre cierres (C7) | ⬜ Pendiente |
-| 3.3 | Tests: validación estructural de skills (frontmatter y rutas referenciadas existentes) | ⬜ Pendiente |
-| 3.4 | Docs: README del plugin y del repo — skill `worktrees` | ⬜ Pendiente |
+| 3.1 | Skill nuevo `skills/worktrees/SKILL.md`: crear/listar/limpiar y orquestar N tareas desde `develop` (base actualizada una sola vez, cierre secuencial) | ✅ Finalizada |
+| 3.2 | `rules/git-flow.md`: sección "Trabajo en paralelo" — criterio de independencia, un worktree por rama, orden de cierre, refresco desde `develop` entre cierres (C7) | ✅ Finalizada |
+| 3.3 | Tests: validación estructural de skills (frontmatter y rutas referenciadas existentes) | ✅ Finalizada |
+| 3.4 | Docs: README del plugin y del repo — skill `worktrees` | ✅ Finalizada |
 
 ### Fase 4 — Registro de tiempos por rama (Ajuste 4)
 | # | Tarea | Estado |
@@ -197,6 +197,7 @@ El registro no guarda solo duraciones: cada rama y cada ventana de trabajo lleva
 
 ## Bitácora
 
+- 2026-09-15 — Fase 3 finalizada: skill `worktrees` (criterio de independencia, lote paralelo, cierre secuencial, tabla de errores de git) y sección "Trabajo en paralelo" en la rule. Los tests estructurales nuevos detectaron que los dos agentes referenciaban `../../rules/` (ruta muerta desde `agents/`); corregido a `../rules/`. Suite: 123 tests en verde.
 - 2026-09-15 — Fase 2 finalizada: política de worktrees en la rule y el skill `git`, módulo compartido `gitwt.py`, bloqueo del finish en worktree linked, cuatro avisos no bloqueantes y subcomando `/git worktree`. **Bug encontrado de paso:** `check_force_push` leía todo el comando compuesto y tomaba el `-ff` de `--no-ff` como flag de force — bloqueaba flujos legítimos del propio plugin. Corregido con segmentación por comando y lookbehind más estricto, con tests de regresión. Suite: 103 tests en verde.
 - 2026-09-15 — Fase 1 finalizada: `session-context.py` reporta worktrees y checklist de configuración, `/git init` documentado en el skill `git`, 85 claves i18n en ES/EN y `test_session_context.py` (8 tests). Suite: 74 tests en verde.
 - 2026-09-14 — `git flow init -d` ejecutado (`main` producción, `develop` integración), `gitflow-es.language=es`, worktree de la feature creado desde `develop`. Plan creado.
