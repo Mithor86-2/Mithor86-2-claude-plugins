@@ -243,6 +243,121 @@ MESSAGES = {
             "guárdalo con `git config gitflow-es.language es` (o `en`) antes de "
             "continuar."
         ),
+        # --- sesión: worktrees y configuración (0.10.0) ---
+        "sc_worktree_control": (
+            "- **Worktree de control** — aquí no se trabaja: crea la rama con "
+            "`/git start <tipo> <descripcion>` y trabaja en su worktree."
+        ),
+        "sc_worktree_linked": "- **Worktree de trabajo:** `{path}`",
+        "sc_worktrees_title": "- **Worktrees activos:** {count}",
+        "sc_worktrees_item": "  - `{branch}` → `{path}`",
+        "sc_config_title": "### ⚙️ Configuración de gitflow-es",
+        "sc_config_pending": "- ⬜ {item}",
+        "sc_config_ok": "- ✅ {item}",
+        "sc_config_gitflow": "git-flow inicializado",
+        "sc_config_lang": "idioma de salida (`gitflow-es.language`)",
+        "sc_config_worktree_root": "raíz de worktrees (`gitflow-es.worktreeRoot`)",
+        "sc_config_time": "registro de tiempos (`gitflow-es.timeTracking`)",
+        "sc_config_action": (
+            "**Acción sugerida:** ofrécele al usuario ejecutar `/git init` para "
+            "dejar la configuración del plugin completa en un solo paso "
+            "(git-flow, idioma, raíz de worktrees y registro de tiempos)."
+        ),
+        "sc_time_line": (
+            "- ⏱ **Tiempo en esta rama:** {total} (trabajo {work} · pruebas "
+            "{tests} · tiempos muertos {idle})"
+        ),
+        "sc_time_off": (
+            "- ⏱ Registro de tiempos desactivado "
+            "(`git config gitflow-es.timeTracking on` para activarlo)"
+        ),
+        # --- guardas de worktree (0.10.0) ---
+        "finish_in_linked_worktree": (
+            "Bloqueado: `git flow {subcommand} finish` dentro del worktree de la "
+            "rama. git-flow no puede hacer checkout de `{develop}` aquí (esa rama "
+            "está ocupada por el worktree de control), así que no mergea nada, no "
+            "borra la rama y aun así imprime «Summary of actions» con código de "
+            "salida 0. El cierre se hace desde el worktree de control."
+        ),
+        "finish_in_linked_worktree_hint": (
+            "Flujo correcto: ir al worktree de control → `git worktree remove "
+            "<ruta>` → `git flow {subcommand} finish <nombre>` → verificar que la "
+            "rama ya no existe y que sus commits quedaron en `{develop}`. El skill "
+            "`git` hace todo eso con `/git finish`."
+        ),
+        "wt_advice_no_worktree": (
+            "⚠️ Aviso gitflow-es: la política del equipo es crear cada rama en su "
+            "propio worktree desde `develop` (`git worktree add -b <rama> <ruta> "
+            "develop`). Este comando la crea en el worktree actual. Si el usuario "
+            "no lo pidió explícitamente, propónle `/git start` en su lugar."
+        ),
+        "wt_advice_base_not_develop": (
+            "⚠️ Aviso gitflow-es: el worktree se está creando desde `{base}` y la "
+            "política es partir de `develop` (excepto `hotfix/`, que parte de "
+            "`main`). Confirma con el usuario si esa base es intencional."
+        ),
+        "wt_advice_edit_on_control": (
+            "⚠️ Aviso gitflow-es: se están modificando archivos en el worktree de "
+            "control, parado en `{branch}`. El trabajo va en el worktree de una "
+            "rama: `/git start <tipo> <descripcion>`."
+        ),
+        "wt_advice_finish_worktree_alive": (
+            "⚠️ Aviso gitflow-es: la rama `{branch}` todavía tiene un worktree en "
+            "`{path}`. Si haces el finish ahora, git-flow mergea pero no puede "
+            "borrar la rama, y aun así reporta éxito. Remueve el worktree primero "
+            "con `git worktree remove {path}`."
+        ),
+        # --- registro de tiempos (0.10.0) ---
+        "tr_title": "## ⏱ Registro de tiempos — `{branch}`",
+        "tr_description": "**Descripción:** {description}",
+        "tr_no_description": (
+            "**Descripción:** sin registrar — usa `/tiempos describir <texto>`"
+        ),
+        "tr_period": (
+            "**Inicio:** {start} · **Fin:** {end} · **Total (reloj):** {total}"
+        ),
+        "tr_in_progress": "en curso",
+        "tr_bucket_header": "| Rubro | Tiempo | % |",
+        "tr_bucket_work": "Trabajo",
+        "tr_bucket_external": "Trabajo fuera de sesión",
+        "tr_bucket_tests": "Pruebas",
+        "tr_bucket_wait": "Espera del usuario",
+        "tr_bucket_idle": "Inactividad",
+        "tr_effective": (
+            "**Efectivo (trabajo + pruebas):** {effective} · **Espera total:** "
+            "{wait_total}"
+        ),
+        "tr_counters": (
+            "**Sesiones:** {sessions} · **Turnos:** {turns} · **Corridas de "
+            "tests:** {tests} ({ok} ok / {failed} fallidas)"
+        ),
+        "tr_dead_validated": (
+            "**Tiempos muertos:** {confirmed} confirmados (sin evidencia de "
+            "actividad) · {external} reclasificados como trabajo fuera de sesión "
+            "(evidencia: {files} archivo(s), {commits} commit(s))"
+        ),
+        "tr_dead_no_evidence": (
+            "**Tiempos muertos:** {confirmed} confirmados (sin evidencia de "
+            "actividad)"
+        ),
+        "tr_evidence_off": (
+            "_Validación por evidencia desactivada (`gitflow-es.evidence off`)._"
+        ),
+        "tr_activity_title": "### Actividad",
+        "tr_activity_header": "| Inicio | Duración | Descripción | Commits |",
+        "tr_estimated": (
+            "_Incluye intervalos estimados: alguna sesión terminó sin evento de "
+            "cierre._"
+        ),
+        "tr_no_data": "No hay registro de tiempos para `{branch}`.",
+        "tr_all_title": "## ⏱ Registro de tiempos — todas las ramas",
+        "tr_all_header": "| Rama | Total | Trabajo | Pruebas | Muertos | Estado |",
+        "tr_calendar": (
+            "**Tiempo de calendario (unión de intervalos):** {calendar} — menor "
+            "que la suma por rama cuando hubo trabajo en paralelo."
+        ),
+        "tr_open": "abierta",
+        "tr_closed": "cerrada",
     },
     "en": {
         # --- safety-check ---
@@ -401,6 +516,118 @@ MESSAGES = {
             "with `git config gitflow-es.language en` (or `es`) before "
             "continuing."
         ),
+        # --- session: worktrees and configuration (0.10.0) ---
+        "sc_worktree_control": (
+            "- **Control worktree** — no work happens here: create the branch with "
+            "`/git start <type> <description>` and work in its worktree."
+        ),
+        "sc_worktree_linked": "- **Working worktree:** `{path}`",
+        "sc_worktrees_title": "- **Active worktrees:** {count}",
+        "sc_worktrees_item": "  - `{branch}` → `{path}`",
+        "sc_config_title": "### ⚙️ gitflow-es configuration",
+        "sc_config_pending": "- ⬜ {item}",
+        "sc_config_ok": "- ✅ {item}",
+        "sc_config_gitflow": "git-flow initialized",
+        "sc_config_lang": "output language (`gitflow-es.language`)",
+        "sc_config_worktree_root": "worktree root (`gitflow-es.worktreeRoot`)",
+        "sc_config_time": "time tracking (`gitflow-es.timeTracking`)",
+        "sc_config_action": (
+            "**Suggested action:** offer to run `/git init` so the plugin "
+            "configuration is completed in one step (git-flow, language, worktree "
+            "root and time tracking)."
+        ),
+        "sc_time_line": (
+            "- ⏱ **Time on this branch:** {total} (work {work} · tests {tests} · "
+            "dead time {idle})"
+        ),
+        "sc_time_off": (
+            "- ⏱ Time tracking disabled "
+            "(`git config gitflow-es.timeTracking on` to enable it)"
+        ),
+        # --- worktree guards (0.10.0) ---
+        "finish_in_linked_worktree": (
+            "Blocked: `git flow {subcommand} finish` inside the branch worktree. "
+            "git-flow cannot check out `{develop}` here (that branch is held by "
+            "the control worktree), so it merges nothing, does not delete the "
+            "branch, and still prints «Summary of actions» with exit code 0. "
+            "Finishing happens from the control worktree."
+        ),
+        "finish_in_linked_worktree_hint": (
+            "Correct flow: go to the control worktree → `git worktree remove "
+            "<path>` → `git flow {subcommand} finish <name>` → verify the branch "
+            "is gone and its commits landed on `{develop}`. The `git` skill does "
+            "all of that with `/git finish`."
+        ),
+        "wt_advice_no_worktree": (
+            "⚠️ gitflow-es notice: team policy is to create every branch in its own "
+            "worktree from `develop` (`git worktree add -b <branch> <path> "
+            "develop`). This command creates it in the current worktree. Unless "
+            "the user asked for that explicitly, offer `/git start` instead."
+        ),
+        "wt_advice_base_not_develop": (
+            "⚠️ gitflow-es notice: the worktree is being created from `{base}`, but "
+            "policy is to branch off `develop` (except `hotfix/`, which branches "
+            "off `main`). Confirm with the user that this base is intentional."
+        ),
+        "wt_advice_edit_on_control": (
+            "⚠️ gitflow-es notice: files are being modified in the control "
+            "worktree, sitting on `{branch}`. Work belongs in a branch worktree: "
+            "`/git start <type> <description>`."
+        ),
+        "wt_advice_finish_worktree_alive": (
+            "⚠️ gitflow-es notice: branch `{branch}` still has a worktree at "
+            "`{path}`. Finishing now merges the branch but cannot delete it, and "
+            "git-flow still reports success. Remove the worktree first with "
+            "`git worktree remove {path}`."
+        ),
+        # --- time tracking (0.10.0) ---
+        "tr_title": "## ⏱ Time log — `{branch}`",
+        "tr_description": "**Description:** {description}",
+        "tr_no_description": (
+            "**Description:** not set — use `/tiempos describir <text>`"
+        ),
+        "tr_period": "**Start:** {start} · **End:** {end} · **Total (clock):** {total}",
+        "tr_in_progress": "in progress",
+        "tr_bucket_header": "| Bucket | Time | % |",
+        "tr_bucket_work": "Work",
+        "tr_bucket_external": "Out-of-session work",
+        "tr_bucket_tests": "Tests",
+        "tr_bucket_wait": "Waiting on user",
+        "tr_bucket_idle": "Idle",
+        "tr_effective": (
+            "**Effective (work + tests):** {effective} · **Total wait:** "
+            "{wait_total}"
+        ),
+        "tr_counters": (
+            "**Sessions:** {sessions} · **Turns:** {turns} · **Test runs:** "
+            "{tests} ({ok} ok / {failed} failed)"
+        ),
+        "tr_dead_validated": (
+            "**Dead time:** {confirmed} confirmed (no evidence of activity) · "
+            "{external} reclassified as out-of-session work (evidence: {files} "
+            "file(s), {commits} commit(s))"
+        ),
+        "tr_dead_no_evidence": (
+            "**Dead time:** {confirmed} confirmed (no evidence of activity)"
+        ),
+        "tr_evidence_off": (
+            "_Evidence validation disabled (`gitflow-es.evidence off`)._"
+        ),
+        "tr_activity_title": "### Activity",
+        "tr_activity_header": "| Start | Duration | Description | Commits |",
+        "tr_estimated": (
+            "_Includes estimated intervals: a session ended without a closing "
+            "event._"
+        ),
+        "tr_no_data": "No time log for `{branch}`.",
+        "tr_all_title": "## ⏱ Time log — all branches",
+        "tr_all_header": "| Branch | Total | Work | Tests | Dead | State |",
+        "tr_calendar": (
+            "**Calendar time (union of intervals):** {calendar} — smaller than the "
+            "per-branch sum when work happened in parallel."
+        ),
+        "tr_open": "open",
+        "tr_closed": "closed",
     },
 }
 

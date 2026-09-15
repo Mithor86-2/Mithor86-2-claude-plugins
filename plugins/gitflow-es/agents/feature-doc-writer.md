@@ -22,7 +22,7 @@ Detecta el idioma configurado para gitflow-es y redacta la **prosa** del doc
 
 Valores válidos: `es` y `en`; cualquier otro se trata como `es`. **Importante:** los
 encabezados del template (`## Descripción`, `## Cambios de lógica de negocio`, etc.,
-definidos en `../../rules/feature-docs.md`) son de **formato fijo** y **NO se
+definidos en `../rules/feature-docs.md`) son de **formato fijo** y **NO se
 traducen** aunque el idioma sea `en` — otros procesos del equipo dependen de ellos.
 Tampoco se traducen nombres de archivos, comandos git ni tipos de commit.
 

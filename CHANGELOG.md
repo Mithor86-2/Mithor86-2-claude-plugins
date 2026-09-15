@@ -2,6 +2,74 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado con [SemVer](https://semver.org/).
 
+## [0.10.0] — 2026-09-15
+
+### Added
+- **Worktrees obligatorios desde `develop`**: cada rama de trabajo nace en su
+  propio worktree (`<padre-del-repo>/<repo>-worktrees/<tipo>-<slug>`, configurable
+  con `gitflow-es.worktreeRoot`) y el repo principal queda como *worktree de
+  control*: parado en `develop`, sin ediciones, y único lugar donde se cierran
+  ramas. `hotfix/` mantiene su base en `main`. Documentado en la rule
+  `git-flow.md` y en los subcomandos `start`, `finish`, `sync` y `worktree` del
+  skill `git`.
+- **Skill `worktrees`**: gestión de worktrees y orquestación de trabajo en
+  paralelo — criterio de independencia entre tareas, actualización única de la
+  base, un ejecutor por worktree y cierre secuencial con refresco de las ramas
+  vivas desde `develop` entre cierres.
+- **Skill `tiempos` y registro de tiempos por rama**: nuevos `hooks/timelog.py`,
+  `hooks/time-tracker.py` y `hooks/time-report.py`. Miden cinco rubros que parten
+  el reloj (trabajo, trabajo fuera de sesión, pruebas, espera del usuario e
+  inactividad), separan el tiempo de pruebas pareando por `tool_use_id` y guardan
+  una descripción corta del trabajo (descripción de la rama, primera línea de
+  cada prompt y asunto de cada commit). El registro es local: vive en
+  `<git-common-dir>/gitflow-es/tiempos/`, nunca aparece en `git status` ni se
+  commitea.
+- **Validación de tiempos muertos con evidencia**: ningún hueco se declara tiempo
+  muerto sin contrastarlo contra los `mtime` de los archivos que reporta `git
+  status` y los timestamps de los commits; lo que tiene evidencia se reclasifica
+  como trabajo fuera de sesión. Descarta escrituras masivas (20+ archivos en 2 s,
+  típico de un `checkout` o un build) y recorta `mtime` futuros.
+- **Subcomando `/git init`**: asistente que deja el repo listo en un paso
+  (git-flow, idioma, raíz de worktrees, registro de tiempos y scopes).
+- **Bloqueo de `git flow <tipo> finish` dentro del worktree de la rama**: ahí
+  git-flow no puede hacer checkout de `develop`, no mergea, no borra la rama y aun
+  así imprime «Summary of actions» con código 0. Se agrega además un aviso cuando
+  el finish corre con el worktree todavía vivo, y `/git finish` verifica las
+  postcondiciones en lugar de confiar en el código de salida.
+- **Avisos no bloqueantes de la política de worktrees** (crear rama sin worktree,
+  base distinta de `develop`, editar en el worktree de control), desactivables con
+  `gitflow-es.worktrees off`.
+- **Nuevas claves de configuración**: `worktreeRoot`, `worktrees`, `timeTracking`,
+  `timeNotes`, `evidence`, `idleThresholdMin`, `externalGapMin`, `externalMargin`,
+  `testPattern` y `timeLogDir`.
+
+### Changed
+- `session-context` (SessionStart) pasa de avisar solo por git-flow a un
+  diagnóstico completo: worktree de control vs. de trabajo, worktrees activos,
+  checklist de configuración pendiente y tiempo acumulado de la rama.
+- `/git sync` deja de usar `checkout` (fallaba con ramas ocupadas por otro
+  worktree) y trabaja con `fetch --all --prune` más fast-forward de refs.
+- `hooks/gitwt.py` (nuevo) centraliza worktrees y configuración: resuelve rama y
+  git-dir leyendo archivos en vez de invocar git, y cachea la config en disco
+  para no pagar un `git config` por evento de hook.
+
+### Fixed
+- **`check_force_push` bloqueaba comandos legítimos**: evaluaba la línea completa
+  y leía el `-ff` de `--no-ff` como flag de force, así que un `git merge --no-ff`
+  junto a un push a `develop` se tomaba por force-push. Ahora cada check corre por
+  segmento de comando y el lookbehind exige inicio de token.
+- Los subagentes referenciaban las rules con `../../rules/`, que desde `agents/`
+  apunta fuera del plugin; corregido a `../rules/`.
+- El reconocimiento de comandos de prueba tomaba como corrida cualquier ruta que
+  contuviera el nombre de un runner (`/tmp/pytest-of-user/`, `pytest-cov`).
+
+### Tests
+- 195 tests (antes 66), 129 nuevos: agregación de tiempos y aditividad de los rubros,
+  evidencia y escrituras masivas, escritura concurrente del log desde varios
+  worktrees, eventos del tracker, guardas de worktree, contexto de sesión y
+  validación estructural del plugin (frontmatter, rutas referenciadas, hooks
+  declarados y sincronía de versiones).
+
 ## [0.9.0] — 2026-06-12
 
 ### Added
