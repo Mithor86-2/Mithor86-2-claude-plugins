@@ -176,15 +176,15 @@ El registro no guarda solo duraciones: cada rama y cada ventana de trabajo lleva
 ### Fase 4 — Registro de tiempos por rama (Ajuste 4)
 | # | Tarea | Estado |
 |---|-------|--------|
-| 4.1 | `hooks/timelog.py`: rutas sin subprocesos, append atómico, saneado/truncado de notas, parsing y agregación del modelo aditivo (incl. intervalos abiertos y desglose de inactividad) | ⬜ Pendiente |
-| 4.1b | `hooks/timelog.py`: escaneo incremental de evidencia (`git status --porcelain` + `mtime`, `git log --format=%cI`) y reclasificación de huecos por clústeres con margen y recorte de relojes desfasados | ⬜ Pendiente |
-| 4.2 | `hooks/time-tracker.py`: hook multi-evento (SessionStart, UserPromptSubmit, Stop, PreToolUse, PostToolUse, PostToolUseFailure, Notification, SessionEnd), pareo por `tool_use_id`, eventos `activity` throttled para ramas paralelas, captura de notas (prompt + asunto de commit) según `gitflow-es.timeNotes`, escaneo de evidencia en inicio/fin de sesión, modo CLI `--mark` / `--note` / `--evidence` | ⬜ Pendiente |
-| 4.3 | `hooks/time-report.py`: CLI (`--branch`, `--all`, `--format md\|json`) en ES/EN, con tabla de actividad (descripción + commits), línea de tiempos muertos validados vs. reclasificados y tiempo de calendario en `--all` | ⬜ Pendiente |
-| 4.4 | `hooks.json`: registrar el tracker en sus eventos; patrón de tests configurable (`gitflow-es.testPattern`) | ⬜ Pendiente |
-| 4.5 | Skill nuevo `skills/tiempos/SKILL.md` (`estado`, `rama`, `todas`, `describir`, `nota`, `exportar`, `reset`) + enganche en `/git start` (descripción de la rama) y `/git finish` (línea de cierre) | ⬜ Pendiente |
-| 4.6 | Claves i18n ES/EN del reporte | ⬜ Pendiente |
-| 4.7 | Tests: `test_timelog.py` (aditividad con cinco rubros, umbral, pareo por id, huérfanos, concurrencia de append, saneado/truncado de notas, clústeres de evidencia, hueco con y sin evidencia, `mtime` futuro) y `test_time_tracker.py` (payload por evento, fail-open, tracking off, `timeNotes` en sus tres modos, `evidence off`) | ⬜ Pendiente |
-| 4.8 | Docs: README del plugin — sección Registro de tiempos (qué mide, descripciones capturadas, dónde vive, cómo se consulta, cómo se desactivan las notas) | ⬜ Pendiente |
+| 4.1 | `hooks/timelog.py`: rutas sin subprocesos, append atómico, saneado/truncado de notas, parsing y agregación del modelo aditivo (incl. intervalos abiertos y desglose de inactividad) | ✅ Finalizada |
+| 4.1b | `hooks/timelog.py`: escaneo incremental de evidencia (`git status --porcelain` + `mtime`, `git log --format=%cI`) y reclasificación de huecos por clústeres con margen y recorte de relojes desfasados | ✅ Finalizada |
+| 4.2 | `hooks/time-tracker.py`: hook multi-evento (SessionStart, UserPromptSubmit, Stop, PreToolUse, PostToolUse, PostToolUseFailure, Notification, SessionEnd), pareo por `tool_use_id`, eventos `activity` throttled para ramas paralelas, captura de notas (prompt + asunto de commit) según `gitflow-es.timeNotes`, escaneo de evidencia en inicio/fin de sesión, modo CLI `--mark` / `--note` / `--evidence` | ✅ Finalizada |
+| 4.3 | `hooks/time-report.py`: CLI (`--branch`, `--all`, `--format md\|json`) en ES/EN, con tabla de actividad (descripción + commits), línea de tiempos muertos validados vs. reclasificados y tiempo de calendario en `--all` | ✅ Finalizada |
+| 4.4 | `hooks.json`: registrar el tracker en sus eventos; patrón de tests configurable (`gitflow-es.testPattern`) | ✅ Finalizada |
+| 4.5 | Skill nuevo `skills/tiempos/SKILL.md` (`estado`, `rama`, `todas`, `describir`, `nota`, `exportar`, `reset`) + enganche en `/git start` (descripción de la rama) y `/git finish` (línea de cierre) | ✅ Finalizada |
+| 4.6 | Claves i18n ES/EN del reporte | ✅ Finalizada |
+| 4.7 | Tests: `test_timelog.py` (aditividad con cinco rubros, umbral, pareo por id, huérfanos, concurrencia de append, saneado/truncado de notas, clústeres de evidencia, hueco con y sin evidencia, `mtime` futuro) y `test_time_tracker.py` (payload por evento, fail-open, tracking off, `timeNotes` en sus tres modos, `evidence off`) | ✅ Finalizada |
+| 4.8 | Docs: README del plugin — sección Registro de tiempos (qué mide, descripciones capturadas, dónde vive, cómo se consulta, cómo se desactivan las notas) | ✅ Finalizada |
 
 ### Fase 5 — Cierre
 | # | Tarea | Estado |
@@ -197,6 +197,7 @@ El registro no guarda solo duraciones: cada rama y cada ventana de trabajo lleva
 
 ## Bitácora
 
+- 2026-09-15 — Fase 4 finalizada: `timelog.py` (agregación aditiva, evidencia, append atómico), `time-tracker.py` (8 eventos + CLI), `time-report.py` (ES/EN, markdown y JSON), skill `tiempos` y wiring de hooks. La prueba end-to-end destapó tres bugs, ya corregidos con test: rutas mutiladas al parsear `git status --porcelain` (el `.strip()` de `run_git` se come el espacio del código de estado), el sello de evidencia escrito al final del escaneo en vez del inicio, y un mismo commit contado dos veces como evidencia. También se ajustó el regex de comandos de test para que una ruta como `/tmp/pytest-of-user/` no cuente como corrida. Suite: 195 tests en verde.
 - 2026-09-15 — Fase 3 finalizada: skill `worktrees` (criterio de independencia, lote paralelo, cierre secuencial, tabla de errores de git) y sección "Trabajo en paralelo" en la rule. Los tests estructurales nuevos detectaron que los dos agentes referenciaban `../../rules/` (ruta muerta desde `agents/`); corregido a `../rules/`. Suite: 123 tests en verde.
 - 2026-09-15 — Fase 2 finalizada: política de worktrees en la rule y el skill `git`, módulo compartido `gitwt.py`, bloqueo del finish en worktree linked, cuatro avisos no bloqueantes y subcomando `/git worktree`. **Bug encontrado de paso:** `check_force_push` leía todo el comando compuesto y tomaba el `-ff` de `--no-ff` como flag de force — bloqueaba flujos legítimos del propio plugin. Corregido con segmentación por comando y lookbehind más estricto, con tests de regresión. Suite: 103 tests en verde.
 - 2026-09-15 — Fase 1 finalizada: `session-context.py` reporta worktrees y checklist de configuración, `/git init` documentado en el skill `git`, 85 claves i18n en ES/EN y `test_session_context.py` (8 tests). Suite: 74 tests en verde.

@@ -41,3 +41,18 @@ def i18n():
 def session_context():
     # Sin cache entre tests: cada uno parchea sus propios globals del módulo.
     return _load("session_context", "session-context.py")
+
+
+@pytest.fixture(scope="session")
+def gitwt():
+    return _load("gitwt", "gitwt.py")
+
+
+@pytest.fixture
+def timelog():
+    return _load("timelog", "timelog.py")
+
+
+@pytest.fixture
+def tracker():
+    return _load("time_tracker", "time-tracker.py")

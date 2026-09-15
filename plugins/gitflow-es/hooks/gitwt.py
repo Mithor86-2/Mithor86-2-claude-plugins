@@ -16,6 +16,7 @@ Diseño:
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import time
@@ -23,6 +24,9 @@ from typing import Dict, List, Optional
 
 DEFAULT_DEVELOP = "develop"
 DEFAULT_PRODUCTION = "main"
+
+# Segundos que vale la config cacheada en disco entre procesos de hook.
+CONFIG_CACHE_TTL = 60
 
 # Cache por proceso de la config `gitflow-es.*`, indexada por cwd resuelto.
 _CONFIG_CACHE: Dict[str, Dict[str, str]] = {}
@@ -53,6 +57,83 @@ def run_git(args: List[str], cwd: Optional[str] = None, timeout: int = 3) -> Opt
 
 
 # --------------------------------------------------------------------------- #
+# Resolución sin subprocesos
+# --------------------------------------------------------------------------- #
+
+# Los hooks corren en cada evento: el camino caliente resuelve rama y git-dir
+# leyendo archivos, y solo cae a `git` si encuentra algo inesperado.
+
+
+def _dot_git_path(cwd: Optional[str] = None) -> Optional[str]:
+    """Busca el `.git` (carpeta o archivo) subiendo desde `cwd`."""
+    try:
+        path = os.path.abspath(cwd or os.getcwd())
+    except OSError:
+        return None
+    while True:
+        candidate = os.path.join(path, ".git")
+        if os.path.exists(candidate):
+            return candidate
+        parent = os.path.dirname(path)
+        if parent == path:
+            return None
+        path = parent
+
+
+def _git_dir_fast(cwd: Optional[str] = None) -> Optional[str]:
+    """
+    Directorio git de este worktree, leyendo archivos. En un worktree linked,
+    `.git` es un archivo con `gitdir: <ruta>/.git/worktrees/<nombre>`.
+    """
+    dot_git = _dot_git_path(cwd)
+    if not dot_git:
+        return None
+    if os.path.isdir(dot_git):
+        return os.path.normpath(dot_git)
+    try:
+        with open(dot_git, "r", encoding="utf-8") as handle:
+            content = handle.read().strip()
+    except OSError:
+        return None
+    if not content.startswith("gitdir:"):
+        return None
+    target = content[len("gitdir:"):].strip()
+    if not os.path.isabs(target):
+        target = os.path.join(os.path.dirname(dot_git), target)
+    return os.path.normpath(target)
+
+
+def _common_git_dir_fast(cwd: Optional[str] = None) -> Optional[str]:
+    """`.git` principal: en un worktree linked es el padre de `worktrees/`."""
+    git_dir = _git_dir_fast(cwd)
+    if not git_dir:
+        return None
+    marker = os.sep + "worktrees" + os.sep
+    if marker in git_dir:
+        return os.path.normpath(git_dir.split(marker)[0])
+    return git_dir
+
+
+def current_branch(cwd: Optional[str] = None) -> Optional[str]:
+    """
+    Rama actual leyendo `HEAD`. None si el worktree está en HEAD desacoplado o
+    si no se pudo resolver (ahí cae a `git`).
+    """
+    git_dir = _git_dir_fast(cwd)
+    if git_dir:
+        try:
+            with open(os.path.join(git_dir, "HEAD"), "r", encoding="utf-8") as handle:
+                head = handle.read().strip()
+        except OSError:
+            head = ""
+        if head.startswith("ref: refs/heads/"):
+            return head[len("ref: refs/heads/"):] or None
+        if head:
+            return None  # detached: no hay rama que registrar
+    return run_git(["branch", "--show-current"], cwd=cwd) or None
+
+
+# --------------------------------------------------------------------------- #
 # Configuración del plugin
 # --------------------------------------------------------------------------- #
 
@@ -67,6 +148,11 @@ def config_all(cwd: Optional[str] = None) -> Dict[str, str]:
     if cached is not None:
         return cached
 
+    cached_file = _config_from_disk(cwd)
+    if cached_file is not None:
+        _CONFIG_CACHE[key] = cached_file
+        return cached_file
+
     values: Dict[str, str] = {}
     raw = run_git(["config", "--get-regexp", r"^gitflow-es\."], cwd=cwd)
     if raw:
@@ -78,7 +164,46 @@ def config_all(cwd: Optional[str] = None) -> Dict[str, str]:
             values[name] = parts[1].strip() if len(parts) > 1 else ""
 
     _CONFIG_CACHE[key] = values
+    _config_to_disk(values, cwd)
     return values
+
+
+def _config_cache_file(cwd: Optional[str] = None) -> Optional[str]:
+    common = common_git_dir(cwd)
+    if not common:
+        return None
+    return os.path.join(common, "gitflow-es", "config-cache.json")
+
+
+def _config_from_disk(cwd: Optional[str] = None) -> Optional[Dict[str, str]]:
+    """
+    Config cacheada en disco, válida por `CONFIG_CACHE_TTL` segundos. Evita un
+    `git config` por cada evento de hook; un cambio de configuración tarda a lo
+    sumo ese TTL en verse (o se aplica ya si se borra el archivo).
+    """
+    path = _config_cache_file(cwd)
+    if not path:
+        return None
+    try:
+        if time.time() - os.path.getmtime(path) > CONFIG_CACHE_TTL:
+            return None
+        with open(path, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _config_to_disk(values: Dict[str, str], cwd: Optional[str] = None) -> None:
+    path = _config_cache_file(cwd)
+    if not path:
+        return
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(values, handle)
+    except OSError:
+        return
 
 
 def config_get(key: str, cwd: Optional[str] = None) -> Optional[str]:
@@ -151,6 +276,10 @@ def common_git_dir(cwd: Optional[str] = None) -> Optional[str]:
     Se resuelve sin `--path-format` (git ≥ 2.31) para no perder compatibilidad:
     si git devuelve una ruta relativa, se ancla al cwd.
     """
+    fast = _common_git_dir_fast(cwd)
+    if fast:
+        return fast
+
     value = run_git(["rev-parse", "--git-common-dir"], cwd=cwd)
     if not value:
         return None
@@ -164,7 +293,7 @@ def is_linked_worktree(cwd: Optional[str] = None) -> bool:
     True si `cwd` está en un worktree creado con `git worktree add` (linked) y
     no en el worktree principal, al que llamamos "de control".
     """
-    own = absolute_git_dir(cwd)
+    own = _git_dir_fast(cwd) or absolute_git_dir(cwd)
     common = common_git_dir(cwd)
     if not own or not common:
         return False
