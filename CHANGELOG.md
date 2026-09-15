@@ -2,6 +2,16 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado con [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- El subcomando `release` del skill `git` documenta el cierre real del ciclo:
+  verificar el prefijo de tag contra los tags existentes antes de cerrar, cómo
+  pasar el mensaje del tag en macOS (donde `git flow release finish -m "texto con
+  espacios"` falla por el `getopt` del sistema), la verificación de
+  postcondiciones del release y cómo integrar `main` si el remoto avanzó por
+  fuera antes de publicar.
+
 ## [0.10.0] — 2026-09-15
 
 ### Added
