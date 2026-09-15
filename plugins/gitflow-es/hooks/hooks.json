@@ -1,5 +1,5 @@
 {
-  "description": "Hooks del plugin gitflow-es: safety (PreToolUse sobre Bash/Write/Edit/MultiEdit/NotebookEdit), post-init (PostToolUse sobre Bash, pide idioma tras `git flow init`) y context (SessionStart).",
+  "description": "Hooks del plugin gitflow-es: safety (PreToolUse sobre Bash/Write/Edit/MultiEdit/NotebookEdit: bloqueos de git peligroso, bloqueo del `git flow finish` dentro de un worktree linked y avisos de la politica de worktrees), post-init (PostToolUse sobre Bash, pide idioma tras `git flow init`), context (SessionStart: estado GitFlow y configuracion pendiente) y time-tracker (registro de tiempos por rama en SessionStart, UserPromptSubmit, Stop, PreToolUse, PostToolUse, PostToolUseFailure, Notification y SessionEnd).",
   "hooks": {
     "PreToolUse": [
       {
@@ -9,6 +9,16 @@
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/safety-check.py\"",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/time-tracker.py\"",
+            "timeout": 5
           }
         ]
       }
@@ -21,6 +31,56 @@
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/post-gitflow-init.py\"",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/time-tracker.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/time-tracker.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/time-tracker.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/time-tracker.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/time-tracker.py\"",
+            "timeout": 5
           }
         ]
       }
@@ -32,6 +92,22 @@
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session-context.py\"",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/time-tracker.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/time-tracker.py\"",
+            "timeout": 10
           }
         ]
       }

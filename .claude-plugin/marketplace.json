@@ -8,10 +8,23 @@
     {
       "name": "gitflow-es",
       "source": "./plugins/gitflow-es",
-      "description": "Skills de Git Flow con idioma ES/EN configurable (`git`, `commit`, `branch-name-suggester`), scopes de commit configurables, rules empotradas, hooks de seguridad (bloquea force-push, commits a main, reset --hard, clean -f, rebase/borrado de ramas protegidas, push que borra main/master/develop, commits con .env, ediciones de archivos en main/master, y comandos `git flow` en repos sin `git flow init`) y los subagentes `feature-doc-writer`, `commit-message-writer` y `release-notes-writer`.",
-      "version": "0.9.0",
+      "description": "Git Flow en español/inglés con worktrees obligatorios desde `develop`, trabajo en paralelo y registro de tiempos por rama (trabajo, pruebas, espera e inactividad, con tiempos muertos validados contra evidencia real). Skills `git`, `commit`, `branch-name-suggester`, `worktrees` y `tiempos`; hooks de seguridad y subagentes de documentación, commits y release notes.",
+      "version": "0.10.0",
       "category": "git",
-      "keywords": ["git", "gitflow", "commit", "conventional-commits", "espanol", "english", "i18n", "workflow", "changelog"]
+      "keywords": [
+        "git",
+        "gitflow",
+        "commit",
+        "conventional-commits",
+        "espanol",
+        "english",
+        "i18n",
+        "workflow",
+        "changelog",
+        "worktree",
+        "paralelo",
+        "time-tracking"
+      ]
     }
   ]
 }

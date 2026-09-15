@@ -2,7 +2,7 @@
 
 Marketplace personal de plugins de Claude Code. Por ahora contiene un plugin:
 
-- **[gitflow-es](./plugins/gitflow-es/README.md)** — Skills, subagentes y hooks de Git Flow con idioma configurable ES/EN (`git`, `commit`, `branch-name-suggester`).
+- **[gitflow-es](./plugins/gitflow-es/README.md)** — Skills, subagentes y hooks de Git Flow con idioma configurable ES/EN (`git`, `commit`, `branch-name-suggester`, `worktrees`, `tiempos`): worktrees obligatorios desde `develop`, trabajo en paralelo y registro de tiempos por rama.
 
 ## Instalación
 
@@ -59,7 +59,7 @@ Eso instala los skills (`git` y `commit`), el subagente (`feature-doc-writer`), 
 /reload-plugins
 ```
 
-Deberías ver un resumen tipo `2 skills · 1 agents · 2 hooks` (si los hooks quedan en `0`, corre `/doctor` para ver el error).
+Deberías ver un resumen tipo `5 skills · 3 agents · 8 hooks` (si los hooks quedan en `0`, corre `/doctor` para ver el error).
 
 Luego:
 

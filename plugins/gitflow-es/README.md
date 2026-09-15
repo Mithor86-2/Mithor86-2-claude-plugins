@@ -1,6 +1,6 @@
 # gitflow-es
 
-![versión](https://img.shields.io/badge/versi%C3%B3n-0.9.0-blue)
+![versión](https://img.shields.io/badge/versi%C3%B3n-0.10.0-blue)
 ![licencia](https://img.shields.io/badge/licencia-MIT-green)
 ![idioma](https://img.shields.io/badge/idioma-ES%20%2F%20EN-orange)
 
@@ -13,8 +13,10 @@ Plugin de **Git Flow para Claude Code** con idioma configurable (Español / Engl
 - **Skill `git`** — ciclo de vida completo de ramas: `start`, `finish`, `release`, `hotfix`, `status` y operaciones básicas (add, push, pull, log, diff, stash, branch, checkout, merge, tag, undo, sync).
 - **Skill `commit`** — genera y aplica commits siguiendo Conventional Commits, analizando el diff staged real.
 - **Skill `branch-name-suggester`** — propone 2-3 nombres de rama en kebab-case con el prefijo GitFlow correcto.
+- **Skill `worktrees`** — una rama, un worktree: crea, lista y limpia worktrees, y reparte tareas independientes en paralelo desde `develop`.
+- **Skill `tiempos`** — registro de tiempos por rama: separa trabajo, pruebas, espera e inactividad, valida los tiempos muertos con evidencia real y guarda una descripción corta de lo hecho.
 - **3 subagentes** (contexto aislado): `feature-doc-writer` (doc de la rama al cerrarla), `commit-message-writer` (mensaje de commit desde el diff) y `release-notes-writer` (CHANGELOG agrupado por tipo Conventional).
-- **3 hooks mecánicos**: `PreToolUse` (bloquea operaciones git peligrosas), `PostToolUse` (pide el idioma tras `git flow init`) y `SessionStart` (imprime el estado GitFlow al abrir el repo).
+- **Hooks mecánicos**: `PreToolUse` (bloquea operaciones git peligrosas y avisa cuando no se sigue la política de worktrees), `PostToolUse` (pide el idioma tras `git flow init`), `SessionStart` (estado GitFlow y configuración pendiente) y el registro de tiempos enganchado a `SessionStart`, `UserPromptSubmit`, `Stop`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `Notification` y `SessionEnd`.
 - **Idioma ES/EN configurable** — todo el texto generado (prosa, mensajes de commit, nombres de rama) sale en el idioma elegido.
 - **Rules empotradas** — política de ramas y formato de docs como fuente única de verdad.
 
@@ -63,7 +65,7 @@ Verifica que quedó activo:
 /plugin
 ```
 
-Deberías ver `gitflow-es` habilitado y un resumen tipo `3 skills · 3 agents · 3 hooks`. Si los hooks aparecen en `0`, corre `/doctor`.
+Deberías ver `gitflow-es` habilitado y un resumen tipo `5 skills · 3 agents · 8 hooks`. Si los hooks aparecen en `0`, corre `/doctor`.
 
 Para actualizar a una versión nueva:
 
@@ -92,6 +94,26 @@ git config gitflow-es.language en
 # Persistente para todos los repos del usuario
 git config --global gitflow-es.language en
 ```
+
+### Todas las claves de configuración
+
+Se configuran con `git config <clave> <valor>` (agregá `--global` para aplicarlas a
+todos tus repos). El asistente **`/git init`** las recorre una por una y las deja
+puestas en un solo paso.
+
+| Clave | Default | Qué controla |
+| --- | --- | --- |
+| `gitflow-es.language` | `es` | Idioma de todo el texto generado |
+| `gitflow-es.scopes` | — | Scopes válidos para Conventional Commits |
+| `gitflow-es.worktreeRoot` | `<padre-del-repo>/<repo>-worktrees` | Dónde se crean los worktrees |
+| `gitflow-es.timeTracking` | `on` | Registro de tiempos por rama |
+| `gitflow-es.timeNotes` | `on` | Descripción del trabajo (prompts + asuntos de commit) |
+| `gitflow-es.evidence` | `on` | Validación de tiempos muertos con `mtime` y commits |
+| `gitflow-es.idleThresholdMin` | `15` | Minutos a partir de los cuales un hueco cuenta como inactividad |
+| `gitflow-es.testPattern` | — | Regex extra para reconocer comandos de pruebas |
+
+Al abrir una sesión, el hook de contexto muestra qué falta por configurar y ofrece
+`/git init`; si ya está todo, no dice nada.
 
 Valores válidos: `es` y `en`; cualquier otro cae a español. Si abres un repo con git-flow ya inicializado y el idioma sin configurar, el plugin te lo pedirá antes de la primera acción de git. No requiere archivos de config adicionales ni permisos especiales más allá de los que Claude Code pide para ejecutar `git`.
 
@@ -151,6 +173,132 @@ necesito un hotfix para el crash al pagar
 
 Parte desde `main`, crea `hotfix/<descripcion>` y avisa que el cierre va a `main` **y** a `develop`.
 
+## Worktrees
+
+Cada rama de trabajo vive en **su propio worktree**, creado desde `develop`
+actualizado. El repo principal queda como **worktree de control**: parado en
+`develop`, sin editar archivos ahí, y es el único lugar donde se cierran ramas.
+
+```text
+mi-repo/                         ← worktree de control (develop)
+mi-repo-worktrees/
+├── feature-login-con-google/    ← una rama, un worktree
+├── fix-timeout-api/
+└── chore-actualizar-deps/
+```
+
+`/git start` hace todo el ciclo: actualiza la base en el control, crea rama y
+worktree en un comando, y te deja trabajando dentro. `/git finish` lo cierra en
+el orden correcto y **verifica** que haya cerrado de verdad.
+
+### Por qué el cierre tiene un orden obligatorio
+
+`git-flow-avh` reporta éxito aunque no haya cerrado nada:
+
+| Escenario | Efecto real | Lo que reporta |
+| --- | --- | --- |
+| `finish` dentro del worktree de la rama | No mergea ni borra la rama | "Summary of actions… merged… removed", exit 0 |
+| `finish` con el worktree de la rama vivo | Mergea, no borra la rama | Lo mismo, exit 0 |
+| `worktree remove` y luego `finish` desde el control | Correcto | Correcto |
+
+Por eso el hook **bloquea** el primer caso, **avisa** en el segundo y `/git finish`
+comprueba las postcondiciones (`git branch --list` vacío y commits realmente en
+`develop`) en vez de confiar en el código de salida.
+
+### Reglas y excepciones
+
+- **Base:** `develop` para todo, salvo `hotfix/`, que parte de `main` por GitFlow.
+- **Creación:** `git worktree add -b`; `git checkout -b` y `git switch -c` quedan fuera.
+- **Excepción:** si pedís explícitamente trabajar sin worktree o desde otra base, se respeta.
+- **`git stash` entre worktrees:** el working tree es de cada uno, pero `refs/stash`
+  es global al repo — guardá y restaurá siempre en el mismo worktree.
+- Los avisos se apagan con `git config gitflow-es.worktrees off`.
+
+### Trabajo en paralelo
+
+Varias tareas independientes = varios worktrees desde `develop`, todos a la vez.
+El skill `worktrees` reparte el lote, actualiza la base una sola vez y cierra las
+ramas **de a una** (los merges nunca van en paralelo).
+
+## Registro de tiempos
+
+Cada rama lleva su propio registro: cuánto duró, en qué se fue el tiempo y qué se
+hizo. Lo alimentan los hooks, sin que haya que iniciar ni parar nada a mano.
+
+```text
+## ⏱ Registro de tiempos — `feature/login-con-google`
+
+**Descripción:** migrar el login a OAuth
+**Inicio:** 2026-09-15 09:04 · **Fin:** 2026-09-15 13:38 · **Total (reloj):** 4h 34m
+
+| Rubro | Tiempo | % |
+|---|---|---|
+| Trabajo | 2h 12m | 48% |
+| Trabajo fuera de sesión | 22m | 8% |
+| Pruebas | 38m | 14% |
+| Espera del usuario | 51m | 19% |
+| Inactividad | 31m | 11% |
+
+**Efectivo (trabajo + pruebas):** 2h 50m · **Espera total:** 1h 22m
+**Tiempos muertos:** 1h 22m confirmados (sin evidencia de actividad) · 22m
+reclasificados como trabajo fuera de sesión (evidencia: 4 archivo(s), 2 commit(s))
+
+### Actividad
+| Inicio | Duración | Descripción | Commits |
+|---|---|---|---|
+| 09:04 | 32m | armar el módulo de log y las rutas | feat(tiempos): agregar timelog |
+| 09:52 | 18m | tests del agregador | test(tiempos): cubrir aditividad |
+```
+
+### Qué mide
+
+Los cinco rubros **parten** el reloj: siempre suman el total.
+
+| Rubro | De dónde sale |
+| --- | --- |
+| Trabajo | Ventanas `prompt → stop`, sin el tiempo de pruebas |
+| Trabajo fuera de sesión | Huecos con evidencia real de actividad |
+| Pruebas | Comandos de test, pareados por `tool_use_id` (cierran también si el test falla) |
+| Espera del usuario | Desde que Claude termina hasta el siguiente mensaje, hasta el umbral |
+| Inactividad | Lo que pasa del umbral (15 min por default) |
+
+### Tiempos muertos validados, no asumidos
+
+Un hueco no se declara tiempo muerto sin contrastarlo: se cruzan los `mtime` de
+los archivos que git reporta modificados (respeta `.gitignore`, así que
+`node_modules` y los artefactos quedan fuera) y los timestamps de los commits. Si
+hay actividad dentro del hueco, esa parte pasa a **trabajo fuera de sesión** — es
+lo que evita contar como inactividad el rato que estuviste editando en tu editor.
+
+Si 20 o más archivos comparten `mtime` en una ventana de 2 segundos, es un
+`checkout` o un build reescribiendo el árbol y se descarta: es el falso positivo
+más probable del método.
+
+### Descripción del trabajo
+
+Sale de fuentes mecánicas, nunca inventada: la descripción que diste en
+`/git start`, la primera línea de cada prompt (truncada a 160 caracteres) y el
+asunto de cada commit. Se corrige con `/tiempos describir "<texto>"`.
+
+### Dónde vive y cómo se consulta
+
+El registro es **local**: `<git-common-dir>/gitflow-es/tiempos/<rama>.jsonl`, o sea
+dentro de `.git/`. No aparece en `git status`, no se commitea y sobrevive a que se
+remueva el worktree.
+
+```text
+/tiempos              → reporte de la rama actual
+/tiempos todas        → comparativa, con tiempo de calendario para el trabajo en paralelo
+/tiempos exportar     → guarda el reporte fuera del repo
+```
+
+### Privacidad
+
+Con `gitflow-es.timeNotes=on` (default) se guarda la primera línea de cada prompt y
+el asunto de cada commit, en disco local. `commits` deja solo los asuntos de commit
+y `off` solo duraciones. Todo el registro se apaga con
+`git config gitflow-es.timeTracking off`.
+
 ## Estructura del proyecto
 
 ```text
@@ -185,6 +333,8 @@ gitflow-es/
 | `git` | Ciclo de vida de ramas y commits GitFlow (start/finish/release/hotfix/status) + operaciones básicas. | Menciones de ramas, PRs, merges, releases, hotfixes, push, pull, stash, tags… aunque no se diga "gitflow". |
 | `commit` | Genera y aplica un commit Conventional analizando el diff staged. | "haz commit", "guarda los cambios", "registra esto", o cuando `git` delega el mensaje. |
 | `branch-name-suggester` | Propone 2-3 nombres de rama en kebab-case con prefijo GitFlow. | Al ir a crear una rama cuando el nombre no está definido, o desde `/git start`. |
+| `worktrees` | Gestiona worktrees (una rama, un worktree desde `develop`) y reparte tareas independientes en paralelo. | Menciones de worktrees, "varias tareas a la vez", paralelizar, o un trabajo descomponible en partes independientes. |
+| `tiempos` | Reporta cuánto tardó cada rama y en qué se fue el tiempo (trabajo, pruebas, espera, inactividad). | Preguntas de cuánto tardó algo, reportes de tiempos, tiempos muertos; y desde `/git start` y `/git finish`. |
 
 Subagentes (se invocan automáticamente desde los skills, no por el usuario): **`feature-doc-writer`** (en `/git finish`), **`commit-message-writer`** (por `/commit`), **`release-notes-writer`** (en `/git release`).
 
