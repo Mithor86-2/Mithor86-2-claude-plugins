@@ -218,7 +218,7 @@ El registro no guarda solo duraciones: cada rama y cada ventana de trabajo lleva
 
 ### Pruebas automatizadas
 
-`python3.8 -m pytest plugins/gitflow-es/tests -q` → **195 tests en verde** (74 antes de este trabajo).
+`python3.8 -m pytest plugins/gitflow-es/tests -q` → **195 tests en verde**: 66 existían antes de esta rama y 129 son nuevos.
 
 ### Pruebas manuales — ⚠️ pendientes de validación humana
 

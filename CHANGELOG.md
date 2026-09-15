@@ -64,7 +64,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado co
   contuviera el nombre de un runner (`/tmp/pytest-of-user/`, `pytest-cov`).
 
 ### Tests
-- 195 tests (antes 74): agregación de tiempos y aditividad de los rubros,
+- 195 tests (antes 66), 129 nuevos: agregación de tiempos y aditividad de los rubros,
   evidencia y escrituras masivas, escritura concurrente del log desde varios
   worktrees, eventos del tracker, guardas de worktree, contexto de sesión y
   validación estructural del plugin (frontmatter, rutas referenciadas, hooks
