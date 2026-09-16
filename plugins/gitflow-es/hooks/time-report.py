@@ -66,6 +66,7 @@ def render_branch(data: Dict[str, Any], lang: str, cwd: Optional[str] = None) ->
         (_t("tr_bucket_work", lang), data["work"]),
         (_t("tr_bucket_external", lang), data["external"]),
         (_t("tr_bucket_tests", lang), data["tests"]),
+        (_t("tr_bucket_approval", lang), data["approval"]),
         (_t("tr_bucket_wait", lang), data["wait"]),
         (_t("tr_bucket_idle", lang), data["idle"]),
     ]

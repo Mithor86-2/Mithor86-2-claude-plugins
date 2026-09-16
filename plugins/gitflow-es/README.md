@@ -236,10 +236,11 @@ hizo. Lo alimentan los hooks, sin que haya que iniciar ni parar nada a mano.
 | Trabajo | 2h 12m | 48% |
 | Trabajo fuera de sesión | 22m | 8% |
 | Pruebas | 38m | 14% |
+| Espera de aprobación | 14m | 5% |
 | Espera del usuario | 51m | 19% |
 | Inactividad | 31m | 11% |
 
-**Efectivo (trabajo + pruebas):** 2h 50m · **Espera total:** 1h 22m
+**Efectivo (trabajo + pruebas):** 2h 50m · **Espera total:** 1h 36m
 **Tiempos muertos:** 1h 22m confirmados (sin evidencia de actividad) · 22m
 reclasificados como trabajo fuera de sesión (evidencia: 4 archivo(s), 2 commit(s))
 
@@ -252,13 +253,14 @@ reclasificados como trabajo fuera de sesión (evidencia: 4 archivo(s), 2 commit(
 
 ### Qué mide
 
-Los cinco rubros **parten** el reloj: siempre suman el total.
+Los seis rubros **parten** el reloj: siempre suman el total.
 
 | Rubro | De dónde sale |
 | --- | --- |
 | Trabajo | Ventanas `prompt → stop`, sin el tiempo de pruebas |
 | Trabajo fuera de sesión | Huecos con evidencia real de actividad |
 | Pruebas | Comandos de test, pareados por `tool_use_id` (cierran también si el test falla) |
+| Espera de aprobación | Desde que se pide un permiso hasta que se responde: lo decide la persona, no Claude |
 | Espera del usuario | Desde que Claude termina hasta el siguiente mensaje, hasta el umbral |
 | Inactividad | Lo que pasa del umbral (15 min por default) |
 

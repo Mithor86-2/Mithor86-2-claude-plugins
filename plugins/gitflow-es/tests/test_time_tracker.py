@@ -20,6 +20,7 @@ class FakeTimelog:
         self.evidence = evidence
         self.events = []
         self.scans = 0
+        self.commit_times = [1700000100.0, 1700000200.0]
 
     # --- configuración ---
     def tracking_enabled(self, cwd=None):
@@ -43,6 +44,9 @@ class FakeTimelog:
     def append_event(self, branch, event, cwd=None, **fields):
         self.events.append({"branch": branch, "event": event, **fields})
         return True
+
+    def collect_commit_times(self, branch, base=None, cwd=None):
+        return list(self.commit_times)
 
     def scan_evidence(self, worktree, since=0.0, limit=200):
         self.scans += 1
@@ -324,3 +328,121 @@ def test_payload_incompleto_no_explota(entorno):
 )
 def test_deteccion_de_fallo_de_herramienta(tracker, payload_dict, esperado):
     assert tracker.tool_failed(payload_dict) is esperado
+
+
+# --------------------------------------------------------------------------- #
+# Espera de aprobación
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    "texto,esperado",
+    [
+        ("permission_request", "permission"),
+        ("tool_permission", "permission"),
+        ("Claude needs your permission to use Bash", "permission"),
+        ("Claude necesita autorización para editar", "permission"),
+        ("idle_prompt", "idle"),
+        ("Claude is waiting for your input", "idle"),
+        ("algo que no encaja", "other"),
+        ("", "other"),
+    ],
+)
+def test_notification_kind_clasifica_el_aviso(tracker, texto, esperado):
+    assert tracker.notification_kind({"notification_type": texto}) == esperado
+
+
+def test_el_permiso_se_reconoce_por_el_texto_del_aviso(entorno):
+    """El `notification_type` no es un contrato estable: el mensaje también vale."""
+    tracker, log, _ = entorno
+    tracker.handle_hook(payload("Notification", message="Claude needs your permission"))
+
+    assert log.primero("notify")["k"] == "permission"
+
+
+def test_correr_la_herramienta_cierra_la_espera_de_aprobacion(entorno):
+    """Que la herramienta corra prueba que el permiso se concedió."""
+    tracker, log, _ = entorno
+    tracker.handle_hook(payload("Notification", notification_type="permission_request"))
+    tracker.handle_hook(payload("PostToolUse", tool_name="Write", tool_input={"file_path": "a.py"}))
+
+    assert log.tipos() == ["notify", "notify_end"]
+
+
+def test_un_permiso_rechazado_se_cierra_al_terminar_el_turno(entorno):
+    tracker, log, _ = entorno
+    tracker.handle_hook(payload("Notification", notification_type="permission_request"))
+    tracker.handle_hook(payload("Stop"))
+
+    assert log.tipos() == ["notify", "notify_end", "stop"]
+
+
+def test_el_prompt_siguiente_tambien_cierra_la_espera(entorno):
+    tracker, log, _ = entorno
+    tracker.handle_hook(payload("Notification", notification_type="permission_request"))
+    tracker.handle_hook(payload("UserPromptSubmit", prompt="seguimos"))
+
+    assert log.tipos() == ["notify", "notify_end", "prompt"]
+
+
+def test_la_espera_se_cierra_una_sola_vez(entorno):
+    tracker, log, _ = entorno
+    tracker.handle_hook(payload("Notification", notification_type="permission_request"))
+    tracker.handle_hook(payload("PostToolUse", tool_name="Write", tool_input={}))
+    tracker.handle_hook(payload("Stop"))
+
+    assert log.tipos().count("notify_end") == 1
+
+
+def test_un_aviso_de_inactividad_no_deja_espera_pendiente(entorno):
+    tracker, log, _ = entorno
+    tracker.handle_hook(payload("Notification", notification_type="idle_prompt"))
+    tracker.handle_hook(payload("Stop"))
+
+    assert "notify_end" not in log.tipos()
+    assert log.primero("notify")["k"] == "idle"
+
+
+# --------------------------------------------------------------------------- #
+# Congelado de la evidencia de commits
+# --------------------------------------------------------------------------- #
+
+
+def test_el_cierre_de_rama_congela_los_commits(entorno):
+    tracker, log, _ = entorno
+    assert tracker.freeze_commit_times("feature/x", "/repo/worktree") == 2
+    assert log.primero("commit_times")["m"] == [1700000100.0, 1700000200.0]
+
+
+def test_sin_commits_no_se_escribe_el_congelado(entorno):
+    tracker, log, _ = entorno
+    log.commit_times = []
+
+    assert tracker.freeze_commit_times("feature/x", "/repo/worktree") == 0
+    assert "commit_times" not in log.tipos()
+
+
+def test_con_la_evidencia_apagada_no_se_congela_nada(entorno):
+    tracker, log, _ = entorno
+    log.evidence = False
+
+    assert tracker.freeze_commit_times("feature/x", "/repo/worktree") == 0
+    assert "commit_times" not in log.tipos()
+
+
+def test_la_marca_de_cierre_congela_los_commits(entorno):
+    """`/git finish` llama al CLI antes del merge: ahí es donde hay que capturar."""
+    tracker, log, _ = entorno
+    tracker.handle_cli(["--mark", "branch_finish", "--note", "cerrada"])
+
+    tipos = log.tipos()
+    assert "commit_times" in tipos
+    # Congelado ANTES de la marca: después del merge el rango queda vacío.
+    assert tipos.index("commit_times") < tipos.index("branch_finish")
+
+
+def test_la_marca_de_inicio_no_congela_commits(entorno):
+    tracker, log, _ = entorno
+    tracker.handle_cli(["--mark", "branch_start", "--note", "arranca"])
+
+    assert "commit_times" not in log.tipos()

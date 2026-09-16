@@ -4,6 +4,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado co
 
 ## [Unreleased]
 
+### Fixed
+- **La espera de aprobación ya no se cobra como trabajo**: el rato entre que
+  se pide un permiso y la persona responde caía dentro de la ventana
+  `prompt → stop` y se sumaba a *Trabajo*. Ahora el hook de `Notification`
+  clasifica el aviso (por tipo o por texto, en es/en), la respuesta lo cierra
+  — la herramienta al correr, o el fin de turno cuando el permiso se rechaza —
+  y el intervalo va a un rubro propio, **Espera de aprobación**. Ante la duda
+  no se descuenta nada: se prefiere subestimar la espera antes que inventarla.
+- **Las ramas cerradas conservan su evidencia de commits**: la validación de
+  tiempos muertos consultaba `git log <base>..<rama>` al *leer* el reporte, y
+  ese rango queda vacío apenas la rama se mergea y se borra — justo cuando el
+  reporte se mira. `/git finish` ahora congela los timestamps en el propio log
+  (evento `commit_times`) antes del merge, y el reporte cae a ellos cuando git
+  ya no puede responder.
+
 ### Changed
 - El subcomando `release` del skill `git` documenta el cierre real del ciclo:
   verificar el prefijo de tag contra los tags existentes antes de cerrar, cómo
