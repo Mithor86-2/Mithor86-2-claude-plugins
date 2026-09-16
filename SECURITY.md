@@ -1,21 +1,41 @@
-# Security Policy
+# Política de seguridad
 
-## Supported Versions
+## Versiones soportadas
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+El plugin sigue SemVer y está en la serie `0.x`: solo la **última versión menor
+publicada** recibe correcciones de seguridad. Al publicarse una nueva menor, la
+anterior deja de recibirlas.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Versión | Soportada |
+| ------- | --------- |
+| 0.10.x  | ✅ |
+| < 0.10  | ❌ |
 
-## Reporting a Vulnerability
+## Reportar una vulnerabilidad
 
-Use this section to tell people how to report a vulnerability.
+Usá el **reporte privado de vulnerabilidades de GitHub**, en la pestaña
+*Security* del repositorio → *Report a vulnerability*. Así el reporte queda
+privado hasta que exista una corrección.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+**No abras un issue público** para una vulnerabilidad: los issues son visibles
+para cualquiera.
+
+En el reporte ayuda incluir la versión del plugin, el sistema operativo, los
+pasos para reproducirlo y qué impacto tiene.
+
+Esperá una primera respuesta dentro de los **7 días**. Si se acepta, el arreglo
+sale en una versión de parche y el reporte se acredita en el `CHANGELOG.md`
+salvo que prefieras permanecer anónimo. Si se descarta, vas a recibir el motivo.
+
+## Alcance
+
+Este repositorio distribuye **plugins de Claude Code**: skills en markdown y
+hooks en Python que corren localmente, con los permisos de quien los instala.
+Interesan especialmente los reportes sobre:
+
+- Ejecución de comandos no prevista desde un hook.
+- Fuga de datos del repositorio o del entorno hacia afuera de la máquina.
+- Operaciones destructivas de git que los hooks de seguridad deberían bloquear.
+
+El registro de tiempos guarda datos **solo en local**, dentro de `.git/`, y
+nunca se commitea ni se envía a ningún servicio.

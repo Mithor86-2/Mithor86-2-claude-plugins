@@ -2,7 +2,7 @@
 
 Lista de features candidatas para versiones futuras del plugin. Cada propuesta incluye objetivo, diseño técnico, casos borde y ejemplos. Este documento es un catálogo para priorizar, **no un compromiso de implementación** — las features se seleccionan según demanda real del equipo.
 
-> Última actualización: 2026-09-15 (tras la v0.10.0).
+> Última actualización: 2026-09-15 (tras la v0.10.1).
 
 ## ✅ Implementado
 
@@ -15,6 +15,7 @@ Lista de features candidatas para versiones futuras del plugin. Cada propuesta i
 | **Worktrees obligatorios desde `develop`** (no estaba en el roadmap) | v0.10.0 | Una rama, un worktree; el repo principal queda como *worktree de control*. Incluye el bloqueo del `git flow finish` dentro del worktree de la rama —donde git-flow reporta éxito sin mergear— y la verificación de postcondiciones del cierre. |
 | **Skill `worktrees`: trabajo en paralelo** (no estaba en el roadmap) | v0.10.0 | Reparte tareas independientes en un worktree por rama desde `develop`, con base actualizada una sola vez y cierres secuenciales. |
 | **Skill `tiempos`: registro por rama** (cubre parte de #12) | v0.10.0 | Trabajo, trabajo fuera de sesión, pruebas, espera e inactividad; tiempos muertos validados contra `mtime` y commits; log local en `.git/gitflow-es/tiempos/`. |
+| **Precisión del registro de tiempos** (no estaba en el roadmap) | v0.10.1 | Sexto rubro **Espera de aprobación**: el rato que tarda la persona en aprobar un permiso sale de *Trabajo*, con clasificación defensiva del aviso (ante la duda no se descuenta). Y la evidencia de commits se congela en el log al cerrar la rama, porque `git log <base>..<rama>` queda vacío apenas la rama se mergea — justo cuando se lee el reporte. |
 | **`/git init`: asistente de configuración** (no estaba en el roadmap) | v0.10.0 | git-flow, idioma, raíz de worktrees, registro de tiempos y scopes en un paso; el hook de sesión lo ofrece cuando falta algo. |
 
 Las secciones #1, #2 y #4 más abajo se conservan como referencia de diseño. Quedan
