@@ -321,6 +321,7 @@ MESSAGES = {
         "tr_bucket_work": "Trabajo",
         "tr_bucket_external": "Trabajo fuera de sesión",
         "tr_bucket_tests": "Pruebas",
+        "tr_bucket_approval": "Espera de aprobación",
         "tr_bucket_wait": "Espera del usuario",
         "tr_bucket_idle": "Inactividad",
         "tr_effective": (
@@ -592,6 +593,7 @@ MESSAGES = {
         "tr_bucket_work": "Work",
         "tr_bucket_external": "Out-of-session work",
         "tr_bucket_tests": "Tests",
+        "tr_bucket_approval": "Waiting on approval",
         "tr_bucket_wait": "Waiting on user",
         "tr_bucket_idle": "Idle",
         "tr_effective": (

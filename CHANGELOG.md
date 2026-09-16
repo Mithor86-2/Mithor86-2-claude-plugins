@@ -2,6 +2,57 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado con [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+## [0.10.1] — 2026-09-15
+
+### Changed
+- El subcomando `release` del skill `git` documenta el cierre real del ciclo:
+  verificar el prefijo de tag contra los tags existentes antes de cerrar, cómo
+  pasar el mensaje del tag en macOS (donde `git flow release finish -m "texto con
+  espacios"` falla por el `getopt` del sistema), la verificación de
+  postcondiciones del release y cómo integrar `main` si el remoto avanzó por
+  fuera antes de publicar.
+
+### Fixed
+- **La espera de aprobación ya no se cobra como trabajo**: el rato entre que
+  se pide un permiso y la persona responde caía dentro de la ventana
+  `prompt → stop` y se sumaba a *Trabajo*. Ahora el hook de `Notification`
+  clasifica el aviso (por tipo o por texto, en es/en), la respuesta lo cierra
+  — la herramienta al correr, o el fin de turno cuando el permiso se rechaza —
+  y el intervalo va a un rubro propio, **Espera de aprobación**. Ante la duda
+  no se descuenta nada: se prefiere subestimar la espera antes que inventarla.
+- **Las ramas cerradas conservan su evidencia de commits**: la validación de
+  tiempos muertos consultaba `git log <base>..<rama>` al *leer* el reporte, y
+  ese rango queda vacío apenas la rama se mergea y se borra — justo cuando el
+  reporte se mira. `/git finish` ahora congela los timestamps en el propio log
+  (evento `commit_times`) antes del merge, y el reporte cae a ellos cuando git
+  ya no puede responder.
+
+### Docs
+- **ROADMAP versionado y al día**: el ROADMAP dejó de ser un archivo suelto sin
+  trackear — ahora vive en el repo y se enlaza desde el README. La tabla de
+  implementado suma las cuatro entregas de la 0.10.0 (worktrees obligatorios,
+  skill `worktrees`, registro de tiempos y `/git init`); #12 (métricas de flujo)
+  queda marcada como parcialmente cubierta —el registro ya aporta la
+  instrumentación, faltan los agregados— y #6 (recordatorio de sync) gana la nota
+  de que debe recorrer todos los worktrees. Entran tres candidatas nuevas salidas
+  de construir la 0.10.0: métricas agregadas sobre el registro (#13),
+  worktree-doctor (#14) y adopción asistida de la política de worktrees (#15).
+- **`SECURITY.md` con una política real**: el archivo entró como la plantilla
+  cruda de GitHub —texto de ejemplo y una tabla que declaraba soporte para
+  versiones `5.1.x` / `4.0.x` que no existen en un proyecto `0.x`—. Ahora dice lo
+  que aplica: solo la última menor recibe correcciones, el reporte va por el canal
+  privado de GitHub y no por un issue público, y el alcance aclara que esto
+  distribuye hooks que corren localmente con los permisos de quien los instala.
+
+### Tests
+- 29 tests nuevos sobre los dos arreglos, 224 en la suite completa: clasificación
+  del aviso y cierre de la espera de aprobación (por la herramienta al correr, por rechazo al fin del turno
+  y por el prompt siguiente, sin doble conteo ni descuentos ante la duda), y
+  congelado de los timestamps de commits al cerrar la rama, incluido el rescate
+  del hueco cuando la rama ya no existe.
+
 ## [0.10.0] — 2026-09-15
 
 ### Added
@@ -237,6 +288,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado co
 - Skill `git` cubriendo start/finish/release/hotfix/status y operaciones básicas (add, push, pull, log, diff, stash, branch, checkout, merge, tag, undo, sync).
 - Rules empotradas: `rules/git-flow.md` (política del flujo) y `rules/feature-docs.md` (formato del doc al cerrar rama).
 
+[0.10.1]: #0101--2026-09-15
+[0.10.0]: #0100--2026-09-15
+[0.9.0]: #090--2026-06-12
+[0.8.0]: #080--2026-06-12
+[0.7.1]: #071--2026-06-05
+[0.7.0]: #070--2026-06-05
 [0.6.0]: #060--2026-06-04
 [0.5.2]: #052--2026-04-23
 [0.5.1]: #051--2026-04-23

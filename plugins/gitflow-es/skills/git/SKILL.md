@@ -235,8 +235,9 @@ Cierra la rama actual fusionándola en su destino según GitFlow.
    # a. guardar el sha de la rama, para verificar después
    SHA=$(git rev-parse HEAD)
 
-   # b. registrar la evidencia de tiempos ANTES de remover el worktree
-   #    (al removerlo desaparecen los mtime de los archivos)
+   # b. congelar la evidencia de tiempos ANTES de remover el worktree y ANTES
+   #    del merge: al remover el worktree desaparecen los mtime, y una vez
+   #    mergeada la rama `git log <base>..<rama>` ya no devuelve nada
    python3 "<plugin>/hooks/time-tracker.py" --mark branch_finish --note "<resumen>"
 
    # c. salir del worktree, removerlo y cerrar desde el worktree de control
@@ -300,18 +301,81 @@ Inicia el proceso formal de release siguiendo GitFlow.
 
 ### Flujo
 
-1. Verificar que `develop` está actualizado (`git pull origin develop`)
-2. Crear rama `release/<version>` desde `develop`
-3. Mostrar los commits incluidos desde el último tag (`git log <ultimo-tag>..develop --oneline`)
-4. Recordar las tareas de release:
+1. Verificar que `develop` está actualizado (`git -C <control> pull --ff-only origin develop`)
+2. **Verificar el prefijo de tag antes de cerrar** — si el repo ya tiene tags, el
+   prefijo configurado debe coincidir con ellos, o el release quedará con un tag
+   fuera de convención:
+   ```bash
+   git tag --sort=-version:refname | head -3    # p. ej. v0.9.0 → usan prefijo "v"
+   git config --get gitflow.prefix.versiontag   # vacío = git-flow tagueará "0.10.0"
+   git config gitflow.prefix.versiontag v       # alinearlo si hace falta
+   ```
+3. Crear la rama `release/<version>` en su worktree desde `develop`:
+   `git worktree add -b release/<version> "<ruta>" develop`
+4. Mostrar los commits incluidos desde el último tag (`git log <ultimo-tag>..develop --oneline`)
+5. Tareas de release dentro del worktree:
    - Actualizar la versión en el archivo del proyecto según el stack
      (`package.json`, `app.json`, `pyproject.toml`, `Cargo.toml`, `composer.json`, etc.)
    - **Actualizar el `CHANGELOG`** delegando al subagente `release-notes-writer`: lee
      el rango de commits desde el último tag y genera el bloque del release agrupado
      por tipo Conventional (Keep a Changelog), escribiéndolo al inicio del
      `CHANGELOG.md`. Revisar su salida con el usuario antes de continuar.
+   - Revisar que la documentación siga describiendo el proyecto real (estructura,
+     conteo de skills/hooks, badges de versión).
    - Hacer commit de los cambios de versión: `chore(release): bump version to <version>`
-5. Al terminar, usar `/git finish` para fusionar en `main` y `develop`
+6. Al terminar, cerrar con `/git finish`, que fusiona en `main` **y** `develop` y crea el tag.
+
+### Cómo pasar el mensaje del tag (trampa de git-flow en macOS)
+
+`git flow release finish -m "Release v1.2.0"` **falla** con el `getopt` que trae
+macOS:
+
+```text
+flags:FATAL the available getopt does not support spaces in options
+```
+
+Y `git flow release finish` sin `-m` abre un editor para el mensaje del tag anotado;
+si el mensaje queda vacío, git aborta el tag y el release queda a medias. Dos salidas:
+
+```bash
+# a) mensaje sin espacios
+git flow release finish -m Release-v1.2.0 1.2.0
+
+# b) editor de un solo uso que escribe el mensaje (permite espacios)
+cat > /tmp/tagmsg.sh <<'EOS'
+#!/bin/sh
+printf '%s\n' "Release v1.2.0 — resumen corto" > "$1"
+EOS
+chmod +x /tmp/tagmsg.sh
+GIT_MERGE_AUTOEDIT=no GIT_EDITOR=/tmp/tagmsg.sh git flow release finish 1.2.0
+```
+
+`GIT_MERGE_AUTOEDIT=no` evita además que se abra el editor en los merges a `main`
+y a `develop`.
+
+### Verificar el cierre del release
+
+Igual que con las features, el código de salida de git-flow no alcanza:
+
+```bash
+git branch --list release/<version>                  # debe salir vacío
+git tag --list v<version>                            # debe existir
+git merge-base --is-ancestor <sha-del-release> main     # debe salir 0
+git merge-base --is-ancestor <sha-del-release> develop  # debe salir 0
+```
+
+### Publicar el release
+
+Con confirmación explícita del usuario, y recordando que `main` puede haber
+avanzado por fuera (merges desde la web, archivos creados en GitHub):
+
+```bash
+git fetch origin
+git log --oneline main..origin/main   # si trae algo, integrarlo ANTES de publicar
+```
+
+Si el remoto tiene commits propios, integrarlos con un merge normal y volver a
+publicar — **nunca** con `--force`.
 
 ---
 
