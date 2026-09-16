@@ -9,7 +9,7 @@
       "name": "gitflow-es",
       "source": "./plugins/gitflow-es",
       "description": "Git Flow en español/inglés con worktrees obligatorios desde `develop`, trabajo en paralelo y registro de tiempos por rama (trabajo, pruebas, espera e inactividad, con tiempos muertos validados contra evidencia real). Skills `git`, `commit`, `branch-name-suggester`, `worktrees` y `tiempos`; hooks de seguridad y subagentes de documentación, commits y release notes.",
-      "version": "0.10.1",
+      "version": "0.10.2",
       "category": "git",
       "keywords": [
         "git",

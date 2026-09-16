@@ -4,6 +4,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado co
 
 ## [Unreleased]
 
+## [0.10.2] — 2026-09-15
+
+### Docs
+- **Un solo README**: el repo tenía dos con audiencias que se pisaban — el raíz
+  era una guía de instalación que nunca contaba qué hace el plugin, y el del
+  plugin tenía la documentación real (worktrees, registro de tiempos,
+  configuración, resolución de problemas) un nivel más abajo, donde nadie la
+  busca al abrir el repo. Ahora hay uno solo en la raíz con todo, con los
+  requisitos y la instalación deduplicados.
+- `plugin.json` declaraba `homepage` apuntando a la carpeta del plugin, y GitHub
+  usa el README de esa carpeta como portada: se reapunta a la raíz del repo para
+  que el enlace siga cayendo en documentación y no en un listado de archivos.
+- El badge de versión, que había quedado en 0.10.0 tras el release anterior,
+  vuelve a reflejar la versión publicada.
+
 ## [0.10.1] — 2026-09-15
 
 ### Changed
@@ -288,6 +303,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/), versionado co
 - Skill `git` cubriendo start/finish/release/hotfix/status y operaciones básicas (add, push, pull, log, diff, stash, branch, checkout, merge, tag, undo, sync).
 - Rules empotradas: `rules/git-flow.md` (política del flujo) y `rules/feature-docs.md` (formato del doc al cerrar rama).
 
+[0.10.2]: #0102--2026-09-15
 [0.10.1]: #0101--2026-09-15
 [0.10.0]: #0100--2026-09-15
 [0.9.0]: #090--2026-06-12
