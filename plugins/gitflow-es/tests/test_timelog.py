@@ -27,7 +27,8 @@ def evento(offset, tipo, **extra):
 
 
 def suma_rubros(data):
-    return data["work"] + data["external"] + data["tests"] + data["wait"] + data["idle"]
+    return (data["work"] + data["external"] + data["tests"]
+            + data["approval"] + data["wait"] + data["idle"])
 
 
 # --------------------------------------------------------------------------- #
@@ -464,3 +465,146 @@ def test_scan_evidence_ignora_rutas_que_ya_no_existen(repo_falso):
     fake_status("D borrado.txt\0")
 
     assert timelog.scan_evidence(str(tmp_path), since=0) == []
+
+
+# --------------------------------------------------------------------------- #
+# Espera de aprobación
+# --------------------------------------------------------------------------- #
+
+
+def test_la_espera_de_permiso_no_se_cobra_como_trabajo(timelog):
+    """El rato que el usuario tarda en aprobar lo decide él, no Claude."""
+    eventos = [
+        evento(0, "prompt"),
+        evento(10, "notify", k="permission"),
+        evento(70, "notify_end"),
+        evento(80, "stop"),
+    ]
+    data = timelog.aggregate(eventos, now=BASE + 80)
+
+    assert data["approval"] == 60
+    assert data["work"] == 20
+    assert suma_rubros(data) == pytest.approx(data["total"])
+
+
+def test_el_aviso_de_inactividad_no_descuenta_trabajo(timelog):
+    eventos = [
+        evento(0, "prompt"),
+        evento(10, "notify", k="idle"),
+        evento(80, "stop"),
+    ]
+    data = timelog.aggregate(eventos, now=BASE + 80)
+
+    assert data["approval"] == 0
+    assert data["work"] == 80
+
+
+def test_un_aviso_sin_clasificar_no_descuenta_trabajo(timelog):
+    """Ante la duda no se descuenta: subestimar la espera, nunca inventarla."""
+    eventos = [
+        evento(0, "prompt"),
+        evento(10, "notify"),
+        evento(80, "stop"),
+    ]
+    data = timelog.aggregate(eventos, now=BASE + 80)
+
+    assert data["approval"] == 0
+    assert data["work"] == 80
+
+
+def test_un_permiso_fuera_de_la_ventana_de_trabajo_no_descuenta(timelog):
+    """El hueco entre turnos ya es espera del usuario: no se cuenta dos veces."""
+    eventos = [
+        evento(0, "prompt"),
+        evento(20, "stop"),
+        evento(30, "notify", k="permission"),
+        evento(40, "prompt"),
+        evento(50, "stop"),
+    ]
+    data = timelog.aggregate(eventos, now=BASE + 50)
+
+    assert data["approval"] == 0
+    assert data["wait"] == 20
+    assert suma_rubros(data) == pytest.approx(data["total"])
+
+
+def test_un_permiso_rechazado_se_cierra_con_el_fin_del_turno(timelog):
+    """Sin herramienta que correr, el `stop` es lo que acota la espera."""
+    eventos = [
+        evento(0, "prompt"),
+        evento(10, "notify", k="permission"),
+        evento(50, "stop"),
+    ]
+    data = timelog.aggregate(eventos, now=BASE + 50)
+
+    assert data["approval"] == 40
+    assert data["work"] == 10
+    assert suma_rubros(data) == pytest.approx(data["total"])
+
+
+def test_la_espera_de_aprobacion_suma_a_la_espera_total(timelog):
+    eventos = [
+        evento(0, "prompt"),
+        evento(10, "notify", k="permission"),
+        evento(70, "notify_end"),
+        evento(80, "stop"),
+    ]
+    data = timelog.aggregate(eventos, now=BASE + 80)
+
+    assert data["wait_total"] == data["wait"] + data["idle_user"] + data["approval"]
+
+
+def test_varias_esperas_de_permiso_en_el_mismo_turno(timelog):
+    eventos = [
+        evento(0, "prompt"),
+        evento(10, "notify", k="permission"),
+        evento(30, "notify_end"),
+        evento(40, "notify", k="permission"),
+        evento(60, "notify_end"),
+        evento(100, "stop"),
+    ]
+    data = timelog.aggregate(eventos, now=BASE + 100)
+
+    assert data["approval"] == 40
+    assert data["work"] == 60
+    assert suma_rubros(data) == pytest.approx(data["total"])
+
+
+# --------------------------------------------------------------------------- #
+# Evidencia de commits congelada
+# --------------------------------------------------------------------------- #
+
+
+def test_persisted_commit_times_lee_la_lista_congelada(timelog):
+    eventos = [evento(0, "commit_times", m=[BASE + 5, BASE + 9])]
+    assert timelog.persisted_commit_times(eventos) == [BASE + 5, BASE + 9]
+
+
+def test_persisted_commit_times_ignora_lo_que_no_sirve(timelog):
+    eventos = [
+        evento(0, "commit_times", m="no-es-una-lista"),
+        evento(1, "commit_times", m=[BASE, "x", None]),
+        evento(2, "prompt"),
+    ]
+    assert timelog.persisted_commit_times(eventos) == [BASE]
+
+
+def test_los_commits_congelados_rescatan_el_hueco_de_una_rama_cerrada(timelog):
+    """
+    Una rama ya mergeada no puede consultar `git log base..rama`: el rango queda
+    vacío. Con los timestamps congelados en el finish, el hueco se justifica.
+    """
+    eventos = [
+        evento(0, "branch_start"),
+        evento(1800, "commit_times", m=[BASE + 900, BASE + 1000]),
+        evento(1800, "branch_finish"),
+    ]
+    sin_rescate = timelog.aggregate(eventos, now=BASE + 1800, commit_times=None)
+    con_rescate = timelog.aggregate(
+        eventos, now=BASE + 1800, commit_times=timelog.persisted_commit_times(eventos)
+    )
+
+    assert sin_rescate["external"] == 0
+    assert con_rescate["external"] > 0
+    assert con_rescate["evidence_commits"] == 2
+    assert suma_rubros(con_rescate) == pytest.approx(con_rescate["total"])

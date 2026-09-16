@@ -50,6 +50,12 @@ MAX_LINE_BYTES = 4000
 MAX_NOTE_CHARS = 160
 
 DEFAULT_IDLE_THRESHOLD = 15 * 60       # gitflow-es.idleThresholdMin
+# Una espera de aprobación se cierra con la respuesta del usuario. El caso
+# normal es `notify_end` (lo escribe el tracker al correr la herramienta), pero
+# si el permiso se rechaza no hay herramienta que correr: ahí cierra el fin del
+# turno o el siguiente prompt.
+CLOSES_APPROVAL = ("notify_end", "stop", "prompt", "session_end", "branch_finish")
+
 DEFAULT_EVIDENCE_GAP = 10 * 60         # gitflow-es.externalGapMin
 DEFAULT_EVIDENCE_MARGIN = 5 * 60       # gitflow-es.externalMargin
 # Más allá de esto, una rama abierta sin actividad deja de sumar reloj: si no,
@@ -476,7 +482,8 @@ def aggregate(
     empty = {
         "branch": None, "description": "", "start": None, "end": None,
         "total": 0.0, "work": 0.0, "external": 0.0, "tests": 0.0,
-        "wait": 0.0, "idle": 0.0, "idle_user": 0.0, "idle_session": 0.0,
+        "approval": 0.0, "wait": 0.0, "idle": 0.0, "idle_user": 0.0,
+        "idle_session": 0.0,
         "sessions": 0, "turns": 0, "test_runs": 0, "test_ok": 0, "test_failed": 0,
         "evidence_files": 0, "evidence_commits": 0, "estimated": False,
         "closed": False, "stale": False, "activities": [],
@@ -567,6 +574,30 @@ def aggregate(
     test_intervals = _clip(_merge(test_intervals), start, end)
     test_runs = test_ok + test_failed + len(pending) + len(orphan_order)
 
+    # --- esperas de aprobación (permiso pedido → permiso resuelto) -----------
+    # El reloj sigue corriendo dentro de `prompt → stop` mientras el usuario
+    # decide si aprueba una herramienta. Ese rato lo decide la persona, no
+    # Claude, así que sale de `trabajo` y va a su propio rubro.
+    approval_intervals: List[Interval] = []
+    open_notify: Optional[Dict[str, Any]] = None
+    for event in ordered:
+        kind = event.get("e")
+        if kind == "notify" and event.get("k") == "permission":
+            if open_notify is None:
+                open_notify = event
+        elif open_notify is not None and kind in CLOSES_APPROVAL:
+            approval_intervals.append((open_notify["t"], event["t"]))
+            open_notify = None
+    if open_notify is not None:
+        # Permiso pedido y sesión cortada sin respuesta: se cierra en el final.
+        approval_intervals.append((open_notify["t"], end))
+        estimated = True
+
+    # Solo cuenta lo que cae dentro de una ventana de trabajo: un permiso que
+    # quedó en un hueco ya se contabiliza como espera del usuario o inactividad.
+    approval_intervals = _intersect(_merge(approval_intervals), work_windows)
+    approval_intervals = _subtract(approval_intervals, test_intervals)
+
     # --- huecos: lo que no es trabajo ni pruebas ------------------------------
     covered = _merge(list(work_windows) + list(test_intervals))
     gaps = _subtract([(start, end)], covered)
@@ -636,7 +667,9 @@ def aggregate(
         ]
         activity["duration"] = max(0.0, activity["end"] - activity["start"])
 
-    work_only = _subtract(work_windows, test_intervals)
+    work_only = _subtract(
+        work_windows, _merge(list(test_intervals) + list(approval_intervals))
+    )
 
     result = dict(empty)
     result.update({
@@ -647,6 +680,7 @@ def aggregate(
         "total": end - start,
         "work": _duration(work_only),
         "tests": _duration(test_intervals),
+        "approval": _duration(approval_intervals),
         "external": _duration(external_intervals),
         "wait": _duration(wait_intervals),
         "idle_user": _duration(idle_user_intervals),
@@ -665,7 +699,7 @@ def aggregate(
     })
     result["idle"] = result["idle_user"] + result["idle_session"]
     result["effective"] = result["work"] + result["tests"]
-    result["wait_total"] = result["wait"] + result["idle_user"]
+    result["wait_total"] = result["wait"] + result["idle_user"] + result["approval"]
     return result
 
 
@@ -732,16 +766,44 @@ def collect_commit_times(branch: str, base: Optional[str] = None, cwd: Optional[
     return times
 
 
+def persisted_commit_times(events: Sequence[Dict[str, Any]]) -> List[float]:
+    """
+    Timestamps de commits congelados en el log al cerrar la rama.
+
+    `collect_commit_times` consulta `git log <base>..<rama>`, que queda vacío
+    apenas la rama se mergea y se borra — es decir, justo cuando se lee el
+    reporte. Por eso `/git finish` los guarda en el log antes del merge: sin
+    esto, una rama cerrada nunca puede justificar sus tiempos muertos.
+    """
+    times: List[float] = []
+    for event in events:
+        if event.get("e") != "commit_times":
+            continue
+        raw = event.get("m")
+        if not isinstance(raw, (list, tuple)):
+            continue
+        for value in raw:
+            try:
+                times.append(float(value))
+            except (TypeError, ValueError):
+                continue
+    return times
+
+
 def branch_report_data(branch: str, cwd: Optional[str] = None, now: Optional[float] = None) -> Dict[str, Any]:
     """Agregación completa de una rama, con la evidencia de commits incluida."""
     events = read_events(branch, cwd)
+    commits = None
+    if evidence_enabled(cwd):
+        # La rama viva se consulta a git; la ya cerrada, al log congelado.
+        commits = collect_commit_times(branch, cwd=cwd) or persisted_commit_times(events)
     return aggregate(
         events,
         now=now,
         threshold=idle_threshold(cwd),
         gap=evidence_gap(cwd),
         margin=evidence_margin(cwd),
-        commit_times=collect_commit_times(branch, cwd=cwd) if evidence_enabled(cwd) else None,
+        commit_times=commits,
         use_evidence=evidence_enabled(cwd),
     )
 

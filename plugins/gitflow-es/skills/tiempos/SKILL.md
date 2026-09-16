@@ -60,10 +60,13 @@ apoyate en estas definiciones:
 | **Trabajo** | Ventanas `prompt → stop`, sin el tiempo de pruebas |
 | **Trabajo fuera de sesión** | Huecos con evidencia real de actividad (archivos modificados o commits) |
 | **Pruebas** | Corridas de tests, medidas de inicio a fin de cada comando |
+| **Espera de aprobación** | Desde que se pide un permiso hasta que se responde |
 | **Espera del usuario** | Desde que Claude terminó hasta el siguiente mensaje, hasta el umbral |
 | **Inactividad** | Lo que pasa del umbral (default 15 min) |
 
-Los cinco rubros suman el total de reloj. **Efectivo** = trabajo + pruebas.
+Los seis rubros suman el total de reloj. **Efectivo** = trabajo + pruebas.
+La espera de aprobación sale de la ventana `prompt → stop` pero no se le
+cobra a Claude: ese rato lo decide quien aprueba.
 
 ---
 
@@ -116,7 +119,7 @@ pidió el usuario; `describir` la corrige después.
 | --- | --- |
 | `/git start` | `--mark branch_start --note "<descripción del usuario>"` |
 | Durante el trabajo | Los hooks registran solos: prompts, pruebas, commits y esperas |
-| `/git finish` | `--mark branch_finish --note "<resumen>"` **antes** de remover el worktree (después ya no hay `mtime` que escanear), y luego se muestra el reporte |
+| `/git finish` | `--mark branch_finish --note "<resumen>"` **antes** de remover el worktree y **antes** del merge: ahí se congelan los `mtime` y los timestamps de los commits, que después ya no se pueden recuperar. Luego se muestra el reporte |
 
 ## Configuración
 

@@ -235,8 +235,9 @@ Cierra la rama actual fusionándola en su destino según GitFlow.
    # a. guardar el sha de la rama, para verificar después
    SHA=$(git rev-parse HEAD)
 
-   # b. registrar la evidencia de tiempos ANTES de remover el worktree
-   #    (al removerlo desaparecen los mtime de los archivos)
+   # b. congelar la evidencia de tiempos ANTES de remover el worktree y ANTES
+   #    del merge: al remover el worktree desaparecen los mtime, y una vez
+   #    mergeada la rama `git log <base>..<rama>` ya no devuelve nada
    python3 "<plugin>/hooks/time-tracker.py" --mark branch_finish --note "<resumen>"
 
    # c. salir del worktree, removerlo y cerrar desde el worktree de control
